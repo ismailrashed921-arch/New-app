@@ -1,0 +1,6 @@
+{
+  "name": "Ki-Lagbe Rider",
+  "description": "Premium rider delivery app for active rider support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
