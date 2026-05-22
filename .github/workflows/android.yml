@@ -15,10 +15,10 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Set up JDK 17
+    - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
-        java-version: '17'
+        java-version: '21'
         distribution: 'temurin'
         cache: gradle
 
@@ -31,9 +31,9 @@ jobs:
     - name: Build Debug APK
       run: |
         if [ -f gradlew ]; then
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug -Pkotlin.compiler.execution.strategy=daemon
         else
-          gradle assembleDebug
+          gradle assembleDebug -Pkotlin.compiler.execution.strategy=daemon
         fi
 
     - name: Upload APK
