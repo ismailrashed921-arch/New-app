@@ -45,6 +45,7 @@ class RiderViewModel : ViewModel() {
     private var locationListener: ListenerRegistration? = null
 
     private var mediaPlayer: MediaPlayer? = null
+    private var vibrator: android.os.Vibrator? = null
     private val notifiedOrderIds = HashSet<String>()
 
     // Exposed States
@@ -531,17 +532,33 @@ class RiderViewModel : ViewModel() {
         if (!isOnline.value) return
         mediaPlayer?.release()
         try {
+            vibrator?.cancel()
+            vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+            // Strong repeating vibration pattern: 1 second vibrating, 0.5 second pause, repeating from start index (0)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 1000, 500, 1000), 0))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(longArrayOf(0, 1000, 500, 1000), 0)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        try {
+            val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             mediaPlayer = MediaPlayer().apply {
-                setDataSource("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg")
+                setDataSource(context, ringtoneUri)
                 isLooping = true
-                prepareAsync()
-                setOnPreparedListener { start() }
+                prepare()
+                start()
             }
         } catch (e: Exception) {
             e.printStackTrace()
             try {
-                val fallbackUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                val fallbackUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 mediaPlayer = MediaPlayer().apply {
                     setDataSource(context, fallbackUri)
                     isLooping = true
@@ -561,6 +578,12 @@ class RiderViewModel : ViewModel() {
             }
             mediaPlayer?.release()
             mediaPlayer = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        try {
+            vibrator?.cancel()
+            vibrator = null
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -643,19 +666,22 @@ fun Map<String, Any>?.toOrder(id: String): Order {
         }
     }
 
-    var parsedOID = when (val raw = this["oID"]) {
-        is Number -> raw.toLong()
-        is String -> raw.toLongOrNull() ?: 0L
-        else -> when (val rawId = this["orderId"] ?: this["orderID"]) {
-            is Number -> rawId.toLong()
-            is String -> rawId.toLongOrNull() ?: 0L
-            else -> 0L
+    val rawOID = this["oID"] ?: this["orderId"] ?: this["orderID"]
+    val oID = when (rawOID) {
+        null -> id
+        is Number -> {
+            val numL = rawOID.toLong()
+            if (numL > 0L) numL.toString() else id
+        }
+        is String -> {
+            val s = rawOID.toString().trim()
+            if (s.isEmpty()) id else s
+        }
+        else -> {
+            val s = rawOID.toString().trim()
+            if (s.isEmpty()) id else s
         }
     }
-    if (parsedOID == 0L) {
-        parsedOID = id.toLongOrNull() ?: 0L
-    }
-    val oID = parsedOID
 
     val total = when (val raw = this["total"]) {
         is Number -> raw.toDouble()

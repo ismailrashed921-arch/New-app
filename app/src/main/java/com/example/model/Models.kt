@@ -24,7 +24,7 @@ data class OrderItem(
 
 data class Order(
     var id: String = "",
-    val oID: Long = 0L,
+    val oID: String = "",
     val name: String = "",
     val phone: String = "",
     val area: String = "",

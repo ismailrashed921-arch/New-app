@@ -105,7 +105,7 @@ class RiderService : Service() {
                             if (!MainActivity.isAppInForeground) {
                                 NotificationHelper.showOrderNotification(
                                     context = applicationContext,
-                                    orderIdStr = if (order.oID > 0L) order.oID.toString() else order.id,
+                                    orderIdStr = order.oID,
                                     area = order.area.ifEmpty { "your area" }
                                 )
                             }

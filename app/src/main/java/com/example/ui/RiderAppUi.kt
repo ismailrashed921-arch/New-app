@@ -2049,5 +2049,5 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
 }
 
 fun getOrderIdDisplay(order: Order): String {
-    return if (order.oID > 0L) order.oID.toString() else order.id
+    return order.oID
 }
