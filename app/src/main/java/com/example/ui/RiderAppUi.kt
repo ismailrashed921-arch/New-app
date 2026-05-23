@@ -1024,7 +1024,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                                     val surcharge = order.surcharge
                                     val handlingFee = order.handlingFee
                                     val totalPaymentExpected = order.total
-                                    val subtotal = order.subtotal
+                                    val subtotal = if (order.subtotal > 0.0) order.subtotal else (order.total - riderFee - surcharge - handlingFee)
 
                                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text("Items Sub-total", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.Gray)

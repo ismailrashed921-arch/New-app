@@ -11,7 +11,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 
 object NotificationHelper {
-    private const val CHANNEL_ID = "kilagbe_orders_channel"
+    private const val CHANNEL_ID = "kilagbe_orders_channel_v3"
     private const val CHANNEL_NAME = "New Assigned Orders"
     private const val CHANNEL_DESC = "Notifications for newly assigned rider orders"
     private const val NOTIFICATION_ID = 1001
@@ -58,8 +58,9 @@ object NotificationHelper {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setContentIntent(pendingIntent)
             .setSound(soundUri)
+            .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000, 500, 1000)) // Distinctive long vibration pattern
             .setAutoCancel(true)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setDefaults(NotificationCompat.DEFAULT_LIGHTS) // Do not use DEFAULT_ALL or DEFAULT_SOUND as they override the Ringtone soundUri
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         try {

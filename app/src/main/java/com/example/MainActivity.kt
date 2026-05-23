@@ -13,9 +13,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.ui.RiderAppUi
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.RiderViewModel
+import android.content.Intent
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val viewModel: RiderViewModel by viewModels()
@@ -24,6 +29,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
+        val prefs = getSharedPreferences("RiderPrefs", Context.MODE_PRIVATE)
+
         // Initialize Notification system
         NotificationHelper.createNotificationChannel(applicationContext)
 
@@ -42,8 +49,29 @@ class MainActivity : ComponentActivity() {
             }
         }
         
+        // Observe online state to start/stop the persistent RiderService
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isOnline.collect { online ->
+                    val serviceIntent = Intent(applicationContext, RiderService::class.java)
+                    if (online) {
+                        val savedPhone = prefs.getString("riderPhone", null)
+                        if (!savedPhone.isNullOrEmpty()) {
+                            serviceIntent.putExtra("riderPhone", savedPhone)
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(serviceIntent)
+                        } else {
+                            startService(serviceIntent)
+                        }
+                    } else {
+                        stopService(serviceIntent)
+                    }
+                }
+            }
+        }
+        
         // Auto-login check
-        val prefs = getSharedPreferences("RiderPrefs", Context.MODE_PRIVATE)
         val savedPhone = prefs.getString("riderPhone", null)
         if (!savedPhone.isNullOrEmpty()) {
             viewModel.startApp(applicationContext, savedPhone)
