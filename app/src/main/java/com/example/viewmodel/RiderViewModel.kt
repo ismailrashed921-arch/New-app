@@ -294,11 +294,6 @@ class RiderViewModel : ViewModel() {
                 if (hasAssignedNow != null) {
                     assignedOrderPopup.value = hasAssignedNow
                     playAlarm(context)
-                    NotificationHelper.showOrderNotification(
-                        context = context,
-                        orderIdStr = hasAssignedNow.oID.toString(),
-                        area = hasAssignedNow.area.ifEmpty { "your area" }
-                    )
                 }
 
                 // Manage active orders
@@ -450,11 +445,6 @@ class RiderViewModel : ViewModel() {
         // Apply filters to compile statistics
         allOrders.forEach { o ->
             val orderTime = o.time
-            if (orderTime >= todayStart && o.status == "Delivered") {
-                dashCash += o.total
-                val fee = o.riderFee ?: o.deliveryFee
-                dashEarnings += (fee + o.surcharge)
-            }
 
             var inFilter = false
             when (filter) {
@@ -465,7 +455,14 @@ class RiderViewModel : ViewModel() {
 
             if (inFilter && (o.status == "Delivered" || o.status == "Cancelled")) {
                 filteredOrders.add(o)
-                if (o.status == "Delivered") completedCount++ else if (o.status == "Cancelled") cancelledCount++
+                if (o.status == "Delivered") {
+                    completedCount++
+                    dashCash += o.total
+                    val fee = o.riderFee ?: o.deliveryFee
+                    dashEarnings += (fee + o.surcharge)
+                } else if (o.status == "Cancelled") {
+                    cancelledCount++
+                }
             }
         }
 
@@ -588,10 +585,22 @@ class RiderViewModel : ViewModel() {
 // Map parsers
 fun Map<String, Any>?.toOrderItem(): OrderItem {
     if (this == null) return OrderItem()
+    
+    val qty = when (val raw = this["qty"]) {
+        is Number -> raw.toInt()
+        is String -> raw.toIntOrNull() ?: 1
+        else -> 1
+    }
+    val buy = when (val raw = this["buy"]) {
+        is Number -> raw.toInt()
+        is String -> raw.toIntOrNull() ?: 0
+        else -> 0
+    }
+
     return OrderItem(
         name = this["name"] as? String ?: "",
-        qty = (this["qty"] as? Number)?.toInt() ?: 1,
-        buy = (this["buy"] as? Number)?.toInt() ?: 0,
+        qty = qty,
+        buy = buy,
         source = this["source"] as? String ?: "Ki-Lagbe Shop",
         variant = this["variant"] as? String ?: "",
         img = this["img"] as? String ?: ""
@@ -619,9 +628,66 @@ fun Map<String, Any>?.toOrder(id: String): Order {
         }
     }
 
+    val oID = when (val raw = this["oID"]) {
+        is Number -> raw.toLong()
+        is String -> raw.toLongOrNull() ?: 0L
+        else -> when (val rawId = this["orderId"] ?: this["orderID"]) {
+            is Number -> rawId.toLong()
+            is String -> rawId.toLongOrNull() ?: 0L
+            else -> 0L
+        }
+    }
+
+    val total = when (val raw = this["total"]) {
+        is Number -> raw.toDouble()
+        is String -> raw.toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
+    val subtotal = when (val raw = this["subtotal"]) {
+        is Number -> raw.toDouble()
+        is String -> raw.toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
+    val deliveryFee = when (val raw = this["deliveryFee"]) {
+        is Number -> raw.toDouble()
+        is String -> raw.toDoubleOrNull() ?: 40.0
+        else -> 40.0
+    }
+    val riderFee = when (val raw = this["riderFee"]) {
+        is Number -> raw.toDouble()
+        is String -> raw.toDoubleOrNull()
+        else -> null
+    }
+    val handlingFee = when (val raw = this["handlingFee"]) {
+        is Number -> raw.toDouble()
+        is String -> raw.toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
+    val surcharge = when (val raw = this["surcharge"]) {
+        is Number -> raw.toDouble()
+        is String -> raw.toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
+
+    val riderAssignedAt = when (val raw = this["riderAssignedAt"]) {
+        is Number -> raw.toLong()
+        is String -> raw.toLongOrNull() ?: 0L
+        else -> 0L
+    }
+    val time = when (val raw = this["time"]) {
+        is Number -> raw.toLong()
+        is String -> raw.toLongOrNull() ?: 0L
+        else -> 0L
+    }
+    val deliveredAt = when (val raw = this["deliveredAt"]) {
+        is Number -> raw.toLong()
+        is String -> raw.toLongOrNull() ?: 0L
+        else -> 0L
+    }
+
     return Order(
         id = id,
-        oID = (this["oID"] as? Number)?.toLong() ?: 0L,
+        oID = oID,
         name = this["name"] as? String ?: "",
         phone = this["phone"] as? String ?: "",
         area = this["area"] as? String ?: "",
@@ -629,16 +695,16 @@ fun Map<String, Any>?.toOrder(id: String): Order {
         status = this["status"] as? String ?: "Pending",
         riderPhone = this["riderPhone"] as? String ?: "",
         items = itemsList,
-        total = (this["total"] as? Number)?.toDouble() ?: 0.0,
-        subtotal = (this["subtotal"] as? Number)?.toDouble() ?: 0.0,
-        deliveryFee = (this["deliveryFee"] as? Number)?.toDouble() ?: 40.0,
-        riderFee = (this["riderFee"] as? Number)?.toDouble(),
-        handlingFee = (this["handlingFee"] as? Number)?.toDouble() ?: 0.0,
-        surcharge = (this["surcharge"] as? Number)?.toDouble() ?: 0.0,
+        total = total,
+        subtotal = subtotal,
+        deliveryFee = deliveryFee,
+        riderFee = riderFee,
+        handlingFee = handlingFee,
+        surcharge = surcharge,
         note = this["note"] as? String ?: "",
-        riderAssignedAt = (this["riderAssignedAt"] as? Number)?.toLong() ?: 0L,
-        time = (this["time"] as? Number)?.toLong() ?: 0L,
-        deliveredAt = (this["deliveredAt"] as? Number)?.toLong() ?: 0L,
+        riderAssignedAt = riderAssignedAt,
+        time = time,
+        deliveredAt = deliveredAt,
         cashSettled = this["cashSettled"] as? Boolean ?: false,
         stockDeducted = this["stockDeducted"] as? Boolean ?: false
     )

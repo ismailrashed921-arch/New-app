@@ -31,8 +31,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
+import com.example.R
 import com.example.model.Order
 import com.example.model.OrderItem
 import com.example.viewmodel.ActiveTab
@@ -111,6 +113,16 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Image(
+                painter = painterResource(id = R.drawable.app_logo),
+                contentDescription = "Ki-Lagbe Logo",
+                modifier = Modifier
+                    .size(110.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .padding(bottom = 16.dp)
+            )
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -255,6 +267,16 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Image(
+                painter = painterResource(id = R.drawable.app_logo),
+                contentDescription = "Ki-Lagbe Logo",
+                modifier = Modifier
+                    .size(90.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .padding(bottom = 12.dp)
+            )
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -1112,7 +1134,8 @@ fun HomeTab(viewModel: RiderViewModel) {
                                     },
                                     modifier = Modifier.size(54.dp),
                                     shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366))
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
+                                    contentPadding = PaddingValues(0.dp)
                                 ) {
                                     Icon(Icons.Default.SupportAgent, "WhatsApp Support", tint = Color.White, modifier = Modifier.size(24.dp))
                                 }
