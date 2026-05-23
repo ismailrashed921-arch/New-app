@@ -43,5 +43,8 @@ data class Order(
     val time: Long = 0L,
     val deliveredAt: Long = 0L,
     val cashSettled: Boolean = false,
-    val stockDeducted: Boolean = false
+    val stockDeducted: Boolean = false,
+    var runningBal: Double = 0.0,
+    var isSettledCustom: Boolean = false,
+    var dueChangeCustom: Double = 0.0
 )

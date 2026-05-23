@@ -2,6 +2,7 @@ package com.example.viewmodel
 
 import android.content.Context
 import android.media.MediaPlayer
+import android.media.RingtoneManager
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -44,6 +45,7 @@ class RiderViewModel : ViewModel() {
     private var locationListener: ListenerRegistration? = null
 
     private var mediaPlayer: MediaPlayer? = null
+    private val notifiedOrderIds = HashSet<String>()
 
     // Exposed States
     val loginState = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -269,7 +271,12 @@ class RiderViewModel : ViewModel() {
                     if ((change.type == com.google.firebase.firestore.DocumentChange.Type.ADDED || 
                          change.type == com.google.firebase.firestore.DocumentChange.Type.MODIFIED) && 
                         order.status == "Assigned" && isOnline.value) {
-                        hasAssignedNow = order
+                        if (!notifiedOrderIds.contains(order.id)) {
+                            notifiedOrderIds.add(order.id)
+                            hasAssignedNow = order
+                        }
+                    } else if (order.status != "Assigned") {
+                        notifiedOrderIds.remove(order.id)
                     }
                 }
 
@@ -419,10 +426,7 @@ class RiderViewModel : ViewModel() {
         // Sort ascending to evaluate chronological balances
         val sortedLedger = ledgerOrders.sortedBy { it.time }
 
-        val filteredOrders = mutableListOf<Order>()
-        var completedCount = 0
-        var cancelledCount = 0
-
+        // Step 1: Calculate chronological Ledger changes and running balances
         sortedLedger.forEach { o ->
             if (o.status == "Delivered") {
                 val fee = o.riderFee ?: o.deliveryFee
@@ -434,32 +438,50 @@ class RiderViewModel : ViewModel() {
                 }
                 
                 val dueChange = o.total - (earn + buyCost)
+                o.dueChangeCustom = dueChange
                 
-                // Track dynamic running balances
                 if (!o.cashSettled) {
                     activeDue += dueChange
+                    o.runningBal = activeDue
+                    o.isSettledCustom = false
+                } else {
+                    o.runningBal = 0.0
+                    o.isSettledCustom = true
                 }
+            } else {
+                o.dueChangeCustom = 0.0
+                o.runningBal = activeDue
+                o.isSettledCustom = o.cashSettled
             }
         }
 
-        // Apply filters to compile statistics
-        allOrders.forEach { o ->
+        val filteredOrders = mutableListOf<Order>()
+        var completedCount = 0
+        var cancelledCount = 0
+
+        // Step 2: Extract filtered orders & compute stats
+        sortedLedger.forEach { o ->
             val orderTime = o.time
 
-            var inFilter = false
-            when (filter) {
-                "today" -> if (orderTime >= todayStart) inFilter = true
-                "yesterday" -> if (orderTime >= yesterdayStart && orderTime < todayStart) inFilter = true
-                "week" -> if (orderTime >= weekStart) inFilter = true
+            // Calculate Today's Stats regardless of selected tab
+            if (orderTime >= todayStart && o.status == "Delivered") {
+                val fee = o.riderFee ?: o.deliveryFee
+                dashCash += o.total
+                dashEarnings += (fee + o.surcharge)
             }
 
-            if (inFilter && (o.status == "Delivered" || o.status == "Cancelled")) {
+            // Calculate Tab Filter Matches
+            var match = false
+            when (filter) {
+                "today" -> if (orderTime >= todayStart) match = true
+                "yesterday" -> if (orderTime >= yesterdayStart && orderTime < todayStart) match = true
+                "week" -> if (orderTime >= weekStart) match = true
+            }
+
+            if (match) {
                 filteredOrders.add(o)
                 if (o.status == "Delivered") {
                     completedCount++
-                    dashCash += o.total
-                    val fee = o.riderFee ?: o.deliveryFee
-                    dashEarnings += (fee + o.surcharge)
                 } else if (o.status == "Cancelled") {
                     cancelledCount++
                 }
@@ -473,26 +495,7 @@ class RiderViewModel : ViewModel() {
         walletDeliveredCount.value = completedCount
         walletCancelledCount.value = cancelledCount
 
-        // Render Ledger item values
-        var runningCumBalance = 0.0
-        val historyDetails = ledgerOrders.sortedBy { it.time }.map { o ->
-            val fee = o.riderFee ?: o.deliveryFee
-            val earn = fee + o.surcharge
-            var buyCost = 0.0
-            o.items.forEach { item -> buyCost += item.buy * item.qty }
-            val cDiff = o.total - (earn + buyCost)
-            
-            if (!o.cashSettled) {
-                runningCumBalance += cDiff
-            }
-            
-            // Return modified order replica carrying UI markers
-            o.copy().apply {
-                id = o.id
-                // Store temporary marker details inside standard attributes or tagging if needed
-            }
-        }
-        
+        // Sort descending by time for UI ledger/history list
         filteredOrders.sortByDescending { it.time }
         transactionHistory.value = filteredOrders
     }
@@ -536,6 +539,18 @@ class RiderViewModel : ViewModel() {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            try {
+                val fallbackUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(context, fallbackUri)
+                    isLooping = true
+                    prepare()
+                    start()
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
 
@@ -628,7 +643,7 @@ fun Map<String, Any>?.toOrder(id: String): Order {
         }
     }
 
-    val oID = when (val raw = this["oID"]) {
+    var parsedOID = when (val raw = this["oID"]) {
         is Number -> raw.toLong()
         is String -> raw.toLongOrNull() ?: 0L
         else -> when (val rawId = this["orderId"] ?: this["orderID"]) {
@@ -637,6 +652,10 @@ fun Map<String, Any>?.toOrder(id: String): Order {
             else -> 0L
         }
     }
+    if (parsedOID == 0L) {
+        parsedOID = id.toLongOrNull() ?: 0L
+    }
+    val oID = parsedOID
 
     val total = when (val raw = this["total"]) {
         is Number -> raw.toDouble()
@@ -705,8 +724,18 @@ fun Map<String, Any>?.toOrder(id: String): Order {
         riderAssignedAt = riderAssignedAt,
         time = time,
         deliveredAt = deliveredAt,
-        cashSettled = this["cashSettled"] as? Boolean ?: false,
-        stockDeducted = this["stockDeducted"] as? Boolean ?: false
+        cashSettled = when (val raw = this["cashSettled"]) {
+            is Boolean -> raw
+            is String -> raw.toBoolean()
+            is Number -> raw.toInt() == 1
+            else -> false
+        },
+        stockDeducted = when (val raw = this["stockDeducted"]) {
+            is Boolean -> raw
+            is String -> raw.toBoolean()
+            is Number -> raw.toInt() == 1
+            else -> false
+        }
     )
 }
 

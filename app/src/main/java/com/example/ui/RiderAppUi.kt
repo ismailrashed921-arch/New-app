@@ -116,12 +116,16 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
             Image(
                 painter = painterResource(id = R.drawable.app_logo),
                 contentDescription = "Ki-Lagbe Logo",
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .size(110.dp)
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(20.dp))
                     .background(Color.White)
-                    .padding(bottom = 16.dp)
+                    .border(2.dp, Color(0xFFF1F2F6), RoundedCornerShape(20.dp))
+                    .padding(8.dp)
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -270,12 +274,16 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
             Image(
                 painter = painterResource(id = R.drawable.app_logo),
                 contentDescription = "Ki-Lagbe Logo",
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .size(90.dp)
-                    .clip(CircleShape)
+                    .size(95.dp)
+                    .clip(RoundedCornerShape(20.dp))
                     .background(Color.White)
-                    .padding(bottom = 12.dp)
+                    .border(2.dp, Color(0xFFF1F2F6), RoundedCornerShape(20.dp))
+                    .padding(8.dp)
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -802,7 +810,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "#${order.oID}",
+                            text = "#${getOrderIdDisplay(order)}",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = if (isSelected) Color(0xFF2D3436) else Color.Gray
@@ -831,7 +839,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "ORDER ID: #${order.oID}",
+                                text = "ORDER ID: #${getOrderIdDisplay(order)}",
                                 fontWeight = FontWeight.Black,
                                 fontSize = 15.sp,
                                 color = Color(0xFF2D3436),
@@ -1124,7 +1132,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                                 Button(
                                     onClick = {
                                         try {
-                                            val query = "Hello Admin, I need help with Order #${order.oID}"
+                                            val query = "Hello Admin, I need help with Order #${getOrderIdDisplay(order)}"
                                             val url = "https://wa.me/8801642912431?text=" + URLEncoder.encode(query, "UTF-8")
                                             val whatsappIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                                             context.startActivity(whatsappIntent)
@@ -1416,7 +1424,7 @@ fun WalletTab(viewModel: RiderViewModel) {
 
                                 Column {
                                     Text(
-                                        text = "Delivery #${o.oID}",
+                                        text = "Delivery #${getOrderIdDisplay(o)}",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF2D3436)
@@ -1432,17 +1440,21 @@ fun WalletTab(viewModel: RiderViewModel) {
 
                             Column(horizontalAlignment = Alignment.End) {
                                 if (o.status == "Delivered") {
+                                    val chg = o.dueChangeCustom
+                                    val chgText = if (chg > 0.0) "+ ৳${chg.toInt()}" else if (chg < 0.0) "- ৳${Math.abs(chg).toInt()}" else "৳0"
+                                    val chgColor = if (chg > 0.0) Color(0xFFFF4757) else if (chg < 0.0) Color(0xFF00B894) else Color(0xFF2D3436)
+
                                     Text(
-                                        text = if (diff >= 0.0) "+ ৳${diff.toInt()}" else "- ৳${Math.abs(diff).toInt()}",
+                                        text = chgText,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Black,
-                                        color = if (diff >= 0.0) Color(0xFFFF4757) else Color(0xFF00B894)
+                                        color = chgColor
                                     )
                                     Text(
-                                        text = if (o.cashSettled) "Settled" else "Pending Settle",
+                                        text = if (o.isSettledCustom) "Settled" else "Balance: ৳${o.runningBal.toInt()}",
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = if (o.cashSettled) Color(0xFF00B894) else Color(0xFFFF4757),
+                                        color = if (o.isSettledCustom) Color(0xFF00B894) else Color.Gray,
                                         modifier = Modifier.padding(top = 2.dp)
                                     )
                                 } else {
@@ -1451,6 +1463,13 @@ fun WalletTab(viewModel: RiderViewModel) {
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Black,
                                         color = Color.DarkGray
+                                    )
+                                    Text(
+                                        text = if (o.isSettledCustom) "Settled" else "Balance: ৳${o.runningBal.toInt()}",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (o.isSettledCustom) Color(0xFF00B894) else Color.Gray,
+                                        modifier = Modifier.padding(top = 2.dp)
                                     )
                                 }
                             }
@@ -1849,7 +1868,7 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
                     val timeStr = formatter.format(Date(order.time)).uppercase()
 
                     Text(
-                        text = "ORDER ID # ${order.oID}\nDELIVERY EARNINGS | $timeStr",
+                        text = "ORDER ID # ${getOrderIdDisplay(order)}\nDELIVERY EARNINGS | $timeStr",
                         fontSize = 11.sp,
                         color = Color.Gray,
                         fontWeight = FontWeight.Bold,
@@ -2027,4 +2046,8 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
             }
         }
     }
+}
+
+fun getOrderIdDisplay(order: Order): String {
+    return if (order.oID > 0L) order.oID.toString() else order.id
 }
