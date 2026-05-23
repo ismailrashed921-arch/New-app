@@ -464,13 +464,6 @@ class RiderViewModel : ViewModel() {
         sortedLedger.forEach { o ->
             val orderTime = o.time
 
-            // Calculate Today's Stats regardless of selected tab
-            if (orderTime >= todayStart && o.status == "Delivered") {
-                val fee = o.riderFee ?: o.deliveryFee
-                dashCash += o.total
-                dashEarnings += (fee + o.surcharge)
-            }
-
             // Calculate Tab Filter Matches
             var match = false
             when (filter) {
@@ -483,6 +476,9 @@ class RiderViewModel : ViewModel() {
                 filteredOrders.add(o)
                 if (o.status == "Delivered") {
                     completedCount++
+                    val fee = o.riderFee ?: o.deliveryFee
+                    dashCash += o.total
+                    dashEarnings += (fee + o.surcharge)
                 } else if (o.status == "Cancelled") {
                     cancelledCount++
                 }

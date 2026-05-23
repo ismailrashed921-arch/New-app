@@ -1425,7 +1425,7 @@ fun WalletTab(viewModel: RiderViewModel) {
                                 Column {
                                     Text(
                                         text = "Delivery #${getOrderIdDisplay(o)}",
-                                        fontSize = 12.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF2D3436)
                                     )
@@ -1433,8 +1433,17 @@ fun WalletTab(viewModel: RiderViewModel) {
                                         text = if (o.status == "Delivered") timeStr else "$timeStr (Cancelled)",
                                         fontSize = 10.sp,
                                         color = Color.Gray,
-                                        fontWeight = FontWeight.SemiBold
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.padding(bottom = 2.dp)
                                     )
+                                    if (o.status == "Delivered") {
+                                        Text(
+                                            text = "Cust. Bill: ৳${o.total.toInt()} | Shop Pay: ৳${shopBill.toInt()} | Your Fee: ৳${totalIncome.toInt()}",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF0984E3)
+                                        )
+                                    }
                                 }
                             }
 
