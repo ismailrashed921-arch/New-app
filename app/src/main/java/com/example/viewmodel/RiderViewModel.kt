@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.net.Uri
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.model.Order
@@ -322,13 +323,32 @@ class RiderViewModel : ViewModel() {
             }
     }
 
-    fun setOnlineStatus(online: Boolean) {
+    fun setOnlineStatus(online: Boolean, context: Context? = null) {
         val rider = currentRider.value ?: return
         val firestore = db ?: return
         
         isOnline.value = online
         firestore.collection("riders").document(rider.phone)
             .update("dutyStatus", if (online) "online" else "offline")
+            .addOnSuccessListener {
+                if (context != null) {
+                    Toast.makeText(
+                        context,
+                        if (online) "You are now ONLINE 🚴" else "You are now OFFLINE 💤",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                isOnline.value = !online
+                if (context != null) {
+                    Toast.makeText(
+                        context,
+                        "Failed to update status: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
             
         if (!online) {
             assignedOrderPopup.value = null
@@ -462,7 +482,14 @@ class RiderViewModel : ViewModel() {
 
         // Step 2: Extract filtered orders & compute stats
         sortedLedger.forEach { o ->
-            val orderTime = o.time
+            // Use deliveredAt for completed orders so stats count on actual completion day
+            val orderTime = if (o.status == "Delivered" && o.deliveredAt > 0L) {
+                o.deliveredAt
+            } else if (o.riderAssignedAt > 0L) {
+                o.riderAssignedAt
+            } else {
+                o.time
+            }
 
             // Calculate Tab Filter Matches
             var match = false

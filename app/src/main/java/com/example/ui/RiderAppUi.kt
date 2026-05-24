@@ -604,9 +604,10 @@ fun WelcomeScreen(viewModel: RiderViewModel) {
                 lineHeight = 22.sp
             )
             Spacer(modifier = Modifier.height(40.dp))
+            val context = LocalContext.current
             Button(
                 onClick = {
-                    viewModel.setOnlineStatus(true)
+                    viewModel.setOnlineStatus(true, context)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -727,7 +728,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                 }
 
                 Button(
-                    onClick = { viewModel.setOnlineStatus(!isOnline) },
+                    onClick = { viewModel.setOnlineStatus(!isOnline, context) },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isOnline) Color(0xFF00B894) else Color(0xFFFF4757)
                     ),
