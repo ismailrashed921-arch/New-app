@@ -7,7 +7,9 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -17,21 +19,27 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.R
@@ -42,34 +50,34 @@ import com.example.viewmodel.LoginState
 import com.example.viewmodel.RiderViewModel
 import com.example.viewmodel.SignUpState
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.*
 
-// Premium Delivery Brand Colors
-private val BrandPrimary = Color(0xFF00C896)
-private val BrandDark = Color(0xFF0F172A)
-private val BrandBackground = Color(0xFFF8FAFC)
-private val BrandAccent = Color(0xFF14B8A6)
-private val BrandSecondaryText = Color(0xFF64748B)
-private val BrandBorder = Color(0xFFE2E8F0)
+// Premium Delivery Startup Colors
+private val BrandPrimary = Color(0xFF00C896)       // Vibrant Premium Green
+private val BrandDark = Color(0xFF0F172A)          // Slate 900 / Deep Slate
+private val BrandLightSlate = Color(0xFFF1F5F9)     // Slate 100 for subtle layers
+private val BrandBackground = Color(0xFFF8FAFC)     // Main app background
+private val BrandAccent = Color(0xFF14B8A6)         // Cool Teal
+private val BrandSecondaryText = Color(0xFF64748B)  // Muted body text
+private val BrandBorder = Color(0xFFE2E8F0)         // Slate 200 border
+private val BrandWarning = Color(0xFFF59E0B)        // Amber/Orange status
+private val BrandDanger = Color(0xFFEF4444)         // Pastel Coral Red
 
 @Composable
 fun RiderAppUi(viewModel: RiderViewModel) {
-    val context = LocalContext.current
     val currentRiderState by viewModel.currentRider.collectAsState()
     val assignedOrderPopup by viewModel.assignedOrderPopup.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().background(BrandBackground)) {
         when {
             currentRiderState == null -> {
                 AuthScreen(viewModel)
             }
             currentRiderState?.status == "pending" -> {
                 PendingScreen(viewModel)
-            }
-            !viewModel.isOnline.collectAsState().value && viewModel.activeOrders.collectAsState().value.isEmpty() -> {
-                WelcomeScreen(viewModel)
             }
             else -> {
                 MainAppScreen(viewModel)
@@ -87,11 +95,16 @@ fun RiderAppUi(viewModel: RiderViewModel) {
 @Composable
 fun AuthScreen(viewModel: RiderViewModel) {
     var isSignUp by remember { mutableStateOf(false) }
-
-    if (isSignUp) {
-        SignUpScreen(viewModel, onNavigateToLogin = { isSignUp = false })
-    } else {
-        LoginScreen(viewModel, onNavigateToSignUp = { isSignUp = true })
+    AnimatedContent(
+        targetState = isSignUp,
+        transitionSpec = { fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300)) },
+        label = "auth_swap"
+    ) { showSignUp ->
+        if (showSignUp) {
+            SignUpScreen(viewModel, onNavigateToLogin = { isSignUp = false })
+        } else {
+            LoginScreen(viewModel, onNavigateToSignUp = { isSignUp = true })
+        }
     }
 }
 
@@ -109,9 +122,7 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
         }
     }
 
-    Scaffold(
-        containerColor = BrandBackground
-    ) { padding ->
+    Scaffold(containerColor = BrandBackground) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -121,78 +132,60 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.app_logo),
-                contentDescription = "Ki-Lagbe Logo",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .size(110.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color.White)
-                    .border(1.5.dp, BrandBorder, RoundedCornerShape(24.dp))
-                    .padding(12.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(bottom = 32.dp)
-            ) {
-                Text(
-                    text = "Ki-Lagbe",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 32.sp,
-                    color = BrandDark
-                )
-                Text(
-                    text = " Rider",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 32.sp,
-                    color = BrandPrimary
-                )
-            }
-
+            Spacer(modifier = Modifier.height(24.dp))
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
+                shape = RoundedCornerShape(32.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                modifier = Modifier.fillMaxWidth().border(1.dp, BrandBorder, RoundedCornerShape(32.dp))
             ) {
                 Column(
                     modifier = Modifier.padding(28.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(90.dp)
+                            .clip(CircleShape)
+                            .background(BrandPrimary.copy(alpha = 0.1f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.TwoWheeler,
+                            contentDescription = "App Icon",
+                            tint = BrandPrimary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Login to Panel",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 20.sp,
-                        color = BrandDark,
-                        modifier = Modifier.padding(bottom = 24.dp)
+                        text = "Ki-Lagbe Rider",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 28.sp,
+                        color = BrandDark
+                    )
+                    Text(
+                        text = "Partner Dashboard",
+                        fontSize = 14.sp,
+                        color = BrandSecondaryText,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
                     )
 
                     OutlinedTextField(
                         value = phone,
                         onValueChange = { phone = it },
-                        label = { Text("Registered Phone Number") },
+                        label = { Text("Phone Number") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         singleLine = true,
                         shape = RoundedCornerShape(16.dp),
+                        leadingIcon = { Icon(Icons.Default.Phone, null, tint = BrandPrimary) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BrandPrimary,
                             unfocusedBorderColor = BrandBorder,
                             focusedLabelColor = BrandPrimary,
-                            unfocusedLabelColor = BrandSecondaryText,
-                            focusedLeadingIconColor = BrandPrimary,
-                            unfocusedLeadingIconColor = BrandSecondaryText
+                            unfocusedLabelColor = BrandSecondaryText
                         ),
-                        leadingIcon = {
-                            Icon(Icons.Default.Phone, "Phone")
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 14.dp)
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp)
                     )
 
                     OutlinedTextField(
@@ -203,55 +196,45 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         shape = RoundedCornerShape(16.dp),
+                        leadingIcon = { Icon(Icons.Default.Lock, null, tint = BrandPrimary) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BrandPrimary,
                             unfocusedBorderColor = BrandBorder,
                             focusedLabelColor = BrandPrimary,
-                            unfocusedLabelColor = BrandSecondaryText,
-                            focusedLeadingIconColor = BrandPrimary,
-                            unfocusedLeadingIconColor = BrandSecondaryText
+                            unfocusedLabelColor = BrandSecondaryText
                         ),
-                        leadingIcon = {
-                            Icon(Icons.Default.Lock, "PIN")
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 24.dp)
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
                     )
 
                     Button(
                         onClick = {
                             if (phone.isEmpty() || pin.isEmpty()) {
-                                Toast.makeText(context, "Enter Phone and PIN!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Please enter Phone and PIN!", Toast.LENGTH_SHORT).show()
                             } else {
                                 viewModel.login(context, phone, pin)
                             }
                         },
                         enabled = loginState !is LoginState.Loading,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
                         shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
                     ) {
                         if (loginState is LoginState.Loading) {
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                         } else {
-                            Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text("Log In Now", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    Text(
-                        text = "Apply as New Rider",
-                        color = BrandPrimary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        modifier = Modifier
-                            .clickable { onNavigateToSignUp() }
-                            .padding(8.dp)
-                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.clickable { onNavigateToSignUp() }.padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Apply as New Partner", color = BrandPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(Icons.Default.ArrowForward, null, tint = BrandPrimary, modifier = Modifier.size(16.dp))
+                    }
                 }
             }
         }
@@ -266,15 +249,13 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
     var phone by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
     var selectedArea by remember { mutableStateOf("") }
-    
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var nidFrontUri by remember { mutableStateOf<Uri?>(null) }
     var nidBackUri by remember { mutableStateOf<Uri?>(null) }
+    var areaMenuExpanded by remember { mutableStateOf(false) }
 
     val locationsState by viewModel.locations.collectAsState()
     val signUpState by viewModel.signUpState.collectAsState()
-
-    var areaMenuExpanded by remember { mutableStateOf(false) }
 
     val photoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { photoUri = it }
     val nidFrontLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { nidFrontUri = it }
@@ -282,119 +263,64 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
 
     LaunchedEffect(signUpState) {
         if (signUpState is SignUpState.Success) {
-            Toast.makeText(context, "Application Submitted! Please wait for Admin approval.", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Application submitted successfully!", Toast.LENGTH_LONG).show()
             onNavigateToLogin()
         } else if (signUpState is SignUpState.Error) {
             Toast.makeText(context, (signUpState as SignUpState.Error).message, Toast.LENGTH_LONG).show()
         }
     }
 
-    Scaffold(
-        containerColor = BrandBackground
-    ) { padding ->
+    Scaffold(containerColor = BrandBackground) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.app_logo),
-                contentDescription = "Ki-Lagbe Logo",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .size(95.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(Color.White)
-                    .border(1.5.dp, BrandBorder, RoundedCornerShape(24.dp))
-                    .padding(8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(bottom = 12.dp)
-            ) {
-                Text(
-                    text = "Apply",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 32.sp,
-                    color = BrandDark
-                )
-                Text(
-                    text = " Rider",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 32.sp,
-                    color = BrandPrimary
-                )
-            }
-
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Admin Verification Required.",
-                color = Color(0xFFFF4757),
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(bottom = 24.dp)
+                text = "Partner Application",
+                fontWeight = FontWeight.Black,
+                fontSize = 28.sp,
+                color = BrandDark
+            )
+            Text(
+                text = "Complete your info to start earning",
+                fontSize = 14.sp,
+                color = BrandSecondaryText,
+                modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
             )
 
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                modifier = Modifier.fillMaxWidth().border(1.dp, BrandBorder, RoundedCornerShape(24.dp))
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Column(modifier = Modifier.padding(24.dp)) {
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text("Full Name (As per NID)") },
+                        label = { Text("Full Name (as in NID)") },
                         singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BrandPrimary,
-                            unfocusedBorderColor = BrandBorder,
-                            focusedLabelColor = BrandPrimary,
-                            unfocusedLabelColor = BrandSecondaryText,
-                            focusedLeadingIconColor = BrandPrimary,
-                            unfocusedLeadingIconColor = BrandSecondaryText
-                        ),
-                        leadingIcon = {
-                            Icon(Icons.Default.Person, "Name")
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        leadingIcon = { Icon(Icons.Default.Person, null, tint = BrandPrimary) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandPrimary, unfocusedBorderColor = BrandBorder),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
                     )
 
                     OutlinedTextField(
                         value = phone,
                         onValueChange = { phone = it },
-                        label = { Text("Active Phone Number") },
+                        label = { Text("Active Mobile Number") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BrandPrimary,
-                            unfocusedBorderColor = BrandBorder,
-                            focusedLabelColor = BrandPrimary,
-                            unfocusedLabelColor = BrandSecondaryText,
-                            focusedLeadingIconColor = BrandPrimary,
-                            unfocusedLeadingIconColor = BrandSecondaryText
-                        ),
-                        leadingIcon = {
-                            Icon(Icons.Default.Phone, "Phone")
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        leadingIcon = { Icon(Icons.Default.Phone, null, tint = BrandPrimary) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandPrimary, unfocusedBorderColor = BrandBorder),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
                     )
 
                     OutlinedTextField(
@@ -404,60 +330,35 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BrandPrimary,
-                            unfocusedBorderColor = BrandBorder,
-                            focusedLabelColor = BrandPrimary,
-                            unfocusedLabelColor = BrandSecondaryText,
-                            focusedLeadingIconColor = BrandPrimary,
-                            unfocusedLeadingIconColor = BrandSecondaryText
-                        ),
-                        leadingIcon = {
-                            Icon(Icons.Default.Lock, "PIN")
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        leadingIcon = { Icon(Icons.Default.Lock, null, tint = BrandPrimary) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandPrimary, unfocusedBorderColor = BrandBorder),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
                     )
 
-                    // Area Selection Dropdown
                     Box(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
                         OutlinedTextField(
                             value = selectedArea,
                             onValueChange = { },
                             readOnly = true,
                             label = { Text("Select Working Area") },
-                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, "Select Area") },
-                            shape = RoundedCornerShape(16.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = BrandPrimary,
-                                unfocusedBorderColor = BrandBorder,
-                                focusedLabelColor = BrandPrimary,
-                                unfocusedLabelColor = BrandSecondaryText,
-                                focusedLeadingIconColor = BrandPrimary,
-                                unfocusedLeadingIconColor = BrandSecondaryText
-                            ),
-                            leadingIcon = {
-                                Icon(Icons.Default.LocationOn, "Location")
-                            },
+                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null, tint = BrandPrimary) },
+                            leadingIcon = { Icon(Icons.Default.LocationOn, null, tint = BrandPrimary) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = BrandPrimary, unfocusedBorderColor = BrandBorder),
                             modifier = Modifier.fillMaxWidth()
                         )
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .clickable { areaMenuExpanded = true }
-                        )
+                        Box(modifier = Modifier.matchParentSize().clickable { areaMenuExpanded = true })
                         DropdownMenu(
                             expanded = areaMenuExpanded,
                             onDismissRequest = { areaMenuExpanded = false },
-                            modifier = Modifier.fillMaxWidth().background(Color.White)
+                            modifier = Modifier.fillMaxWidth(0.8f).background(Color.White)
                         ) {
-                            locationsState.forEach { areaName ->
+                            locationsState.forEach { loc ->
                                 DropdownMenuItem(
-                                    text = { Text(areaName) },
+                                    text = { Text(loc, fontWeight = FontWeight.Bold) },
                                     onClick = {
-                                        selectedArea = areaName
+                                        selectedArea = loc
                                         areaMenuExpanded = false
                                     }
                                 )
@@ -465,127 +366,89 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                         }
                     }
 
-                    // Selfie Image Picker
-                    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                        Text(
-                            text = "YOUR CLEAR SELFIE",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandSecondaryText,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(1.5.dp, BrandBorder, RoundedCornerShape(16.dp))
-                                .clickable { photoLauncher.launch("image/*") }
-                                .padding(12.dp)
-                        ) {
-                            Icon(Icons.Default.PhotoCamera, "Selfie", tint = BrandPrimary)
-                            Text(
-                                text = if (photoUri != null) "Selfie Selected ✅" else "Choose Image File",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = if (photoUri != null) BrandPrimary else BrandSecondaryText
-                            )
-                        }
-                    }
-
-                    // NID identity cards upload
-                    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)) {
-                        Text(
-                            text = "NID FRONT & BACK MATCH",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BrandSecondaryText,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .border(1.5.dp, BrandBorder, RoundedCornerShape(16.dp))
-                                    .clickable { nidFrontLauncher.launch("image/*") }
-                                    .padding(12.dp)
-                            ) {
-                                Text(
-                                    text = if (nidFrontUri != null) "Front ✅" else "NID Front",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (nidFrontUri != null) BrandPrimary else BrandSecondaryText
-                                )
-                            }
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .border(1.5.dp, BrandBorder, RoundedCornerShape(16.dp))
-                                    .clickable { nidBackLauncher.launch("image/*") }
-                                    .padding(12.dp)
-                            ) {
-                                Text(
-                                    text = if (nidBackUri != null) "Back ✅" else "NID Back",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (nidBackUri != null) BrandPrimary else BrandSecondaryText
-                                )
-                            }
-                        }
-                    }
-
-                    // Registration Action
-                    Button(
-                        onClick = {
-                            viewModel.signUp(
-                                context,
-                                name,
-                                phone,
-                                pin,
-                                selectedArea,
-                                photoUri,
-                                nidFrontUri,
-                                nidBackUri
-                            )
-                        },
-                        enabled = signUpState !is SignUpState.Progress,
+                    // Selfie Image Clicker
+                    Text("YOUR CLEAR SELFIE", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText, modifier = Modifier.padding(bottom = 6.dp))
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
+                            .border(1.dp, BrandBorder, RoundedCornerShape(12.dp))
+                            .clickable { photoLauncher.launch("image/*") }
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.PhotoCamera, null, tint = BrandPrimary)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = if (photoUri != null) "Selfie Selected ✅" else "Tap to choose image file",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (photoUri != null) BrandPrimary else BrandSecondaryText
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text("NID DOCUMENTS UPWARD", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText, modifier = Modifier.padding(bottom = 6.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .border(1.dp, BrandBorder, RoundedCornerShape(12.dp))
+                                .clickable { nidFrontLauncher.launch("image/*") }
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = if (nidFrontUri != null) "Front ✅" else "NID Front Side",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (nidFrontUri != null) BrandPrimary else BrandSecondaryText
+                            )
+                        }
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .border(1.dp, BrandBorder, RoundedCornerShape(12.dp))
+                                .clickable { nidBackLauncher.launch("image/*") }
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = if (nidBackUri != null) "Back ✅" else "NID Back Side",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (nidBackUri != null) BrandPrimary else BrandSecondaryText
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = {
+                            viewModel.signUp(context, name, phone, pin, selectedArea, photoUri, nidFrontUri, nidBackUri)
+                        },
+                        enabled = signUpState !is SignUpState.Progress,
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
                         shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
                     ) {
                         if (signUpState is SignUpState.Progress) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = (signUpState as SignUpState.Progress).message,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Text((signUpState as SignUpState.Progress).message, fontSize = 14.sp)
                             }
                         } else {
-                            Text("Submit Application", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text("Submit Secure Application", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-
                     Text(
-                        text = "Already Applied? Login",
+                        text = "Already submitted? Log in here",
                         color = BrandPrimary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        modifier = Modifier
-                            .clickable { onNavigateToLogin() }
-                            .padding(8.dp)
+                        modifier = Modifier.align(Alignment.CenterHorizontally).clickable { onNavigateToLogin() }.padding(8.dp)
                     )
                 }
             }
@@ -596,103 +459,110 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
 @Composable
 fun PendingScreen(viewModel: RiderViewModel) {
     val context = LocalContext.current
-    Scaffold(
-        containerColor = BrandBackground
-    ) { padding ->
+    Scaffold(containerColor = BrandBackground) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(32.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.HourglassEmpty,
-                contentDescription = "Pending Approval",
-                tint = Color(0xFFF39C12),
-                modifier = Modifier.size(80.dp)
-            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(100.dp).clip(CircleShape).background(BrandWarning.copy(alpha = 0.12f))
+            ) {
+                Icon(Icons.Default.HourglassEmpty, null, tint = BrandWarning, modifier = Modifier.size(54.dp))
+            }
             Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = "Application Pending",
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 24.sp,
-                color = BrandDark
-            )
+            Text("Verification In Progress", fontWeight = FontWeight.Black, fontSize = 24.sp, color = BrandDark)
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Your account has been submitted successfully and is awaiting admin approval. We will notify you once verified.",
+                text = "Your agent profile is successfully filed and currently being thoroughly audited by administration. We'll send you an instant SMS confirmation standard.",
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp,
                 color = BrandSecondaryText,
                 lineHeight = 22.sp
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(36.dp))
             Button(
                 onClick = { viewModel.logout(context) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4757)),
+                colors = ButtonDefaults.buttonColors(containerColor = BrandDanger),
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.width(200.dp).height(50.dp)
+                modifier = Modifier.width(220.dp).height(50.dp)
             ) {
-                Icon(Icons.Default.Logout, "Logout", tint = Color.White)
+                Icon(Icons.Default.Logout, null, tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Logout Application", fontWeight = FontWeight.Bold)
+                Text("Cancel & Sign Out", fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
     }
 }
 
 @Composable
-fun WelcomeScreen(viewModel: RiderViewModel) {
+fun WelcomeScreen(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
+    val context = LocalContext.current
     Scaffold(
-        containerColor = BrandBackground
+        containerColor = Color.White,
+        topBar = {
+            Row(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { onMenuClick() }
+                ) {
+                    Icon(Icons.Default.Menu, "Menu", tint = BrandDark, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text("Ki-Lagbe", fontWeight = FontWeight.Black, fontSize = 20.sp, color = BrandDark)
+                    Text(" Rider", fontWeight = FontWeight.Black, fontSize = 20.sp, color = BrandPrimary)
+                }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(BrandDanger.copy(alpha = 0.1f))
+                        .border(1.dp, BrandDanger.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(BrandDanger))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("OFFLINE", fontSize = 10.sp, fontWeight = FontWeight.Black, color = BrandDanger)
+                    }
+                }
+            }
+        }
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(32.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.TwoWheeler,
-                contentDescription = "Get Started",
-                tint = BrandPrimary,
-                modifier = Modifier.size(80.dp)
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = "Welcome Back!",
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 24.sp,
-                color = BrandDark
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Tap the button below to go online and start receiving active orders in your area.",
-                textAlign = TextAlign.Center,
-                fontSize = 14.sp,
-                color = BrandSecondaryText,
-                lineHeight = 22.sp
-            )
-            Spacer(modifier = Modifier.height(40.dp))
-            val context = LocalContext.current
-            Button(
-                onClick = {
-                    viewModel.setOnlineStatus(true, context)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(58.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
-            ) {
-                Icon(Icons.Default.PowerSettingsNew, "Go Online", tint = Color.White)
-                Spacer(modifier = Modifier.width(10.dp))
-                Text("Get Started & Go Online", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.weight(1.2f)) {
+                DeliveryScooterCanvas()
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("You are currently OFFLINE", fontWeight = FontWeight.Black, fontSize = 22.sp, color = BrandDark)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Go online to start receiving orders securely around your dynamic region.",
+                textAlign = TextAlign.Center,
+                fontSize = 13.sp,
+                color = BrandSecondaryText,
+                lineHeight = 20.sp,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(30.dp))
+            Button(
+                onClick = { viewModel.setOnlineStatus(true, context) },
+                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
+                shape = RoundedCornerShape(18.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp).shadow(8.dp, RoundedCornerShape(18.dp), spotColor = BrandPrimary)
+            ) {
+                Icon(Icons.Default.PowerSettingsNew, null, tint = Color.White)
+                Spacer(modifier = Modifier.width(10.dp))
+                Text("Go Online Now", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+            }
+            Spacer(modifier = Modifier.height(30.dp))
         }
     }
 }
@@ -700,528 +570,682 @@ fun WelcomeScreen(viewModel: RiderViewModel) {
 @Composable
 fun MainAppScreen(viewModel: RiderViewModel) {
     val activeTab by viewModel.activeTab.collectAsState()
+    val isOnline by viewModel.isOnline.collectAsState()
+    val riderDetail by viewModel.currentRider.collectAsState()
+    val context = LocalContext.current
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    Scaffold(
-        containerColor = BrandBackground,
-        bottomBar = {
-            NavigationBar(
-                containerColor = Color.White,
-                tonalElevation = 8.dp,
-                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerContainerColor = Color.White,
+                modifier = Modifier.width(280.dp)
             ) {
-                NavigationBarItem(
-                    selected = activeTab == ActiveTab.Home,
-                    onClick = { viewModel.activeTab.value = ActiveTab.Home },
-                    icon = { Icon(Icons.Default.Home, "Home") },
-                    label = { Text("Home") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BrandPrimary,
-                        selectedTextColor = BrandPrimary,
-                        indicatorColor = Color(0x1500C896),
-                        unselectedIconColor = BrandSecondaryText,
-                        unselectedTextColor = BrandSecondaryText
+                Column(
+                    modifier = Modifier.fillMaxHeight().fillMaxWidth().statusBarsPadding()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Brush.horizontalGradient(colors = listOf(BrandPrimary, Color(0xFF00C896))))
+                            .padding(24.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Ki-Lagbe Rider", fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, color = Color.White)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color.White.copy(alpha = 0.2f))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(if (isOnline) Color(0xFF4ADE80) else Color(0xFFF87171)))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(if (isOnline) "ONLINE" else "OFFLINE", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.White)
+                                }
+                            }
+                            Icon(Icons.Default.TwoWheeler, null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(48.dp))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val menuOptions = listOf(
+                        Triple("Dashboard", Icons.Default.GridView, ActiveTab.Home),
+                        Triple("My Orders", Icons.Default.ListAlt, ActiveTab.Orders),
+                        Triple("Wallet", Icons.Default.AccountBalanceWallet, ActiveTab.Wallet),
+                        Triple("Profile", Icons.Default.Person, ActiveTab.Profile)
                     )
-                )
-                NavigationBarItem(
-                    selected = activeTab == ActiveTab.Wallet,
-                    onClick = { viewModel.activeTab.value = ActiveTab.Wallet },
-                    icon = { Icon(Icons.Default.AccountBalanceWallet, "Wallet") },
-                    label = { Text("Wallet") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BrandPrimary,
-                        selectedTextColor = BrandPrimary,
-                        indicatorColor = Color(0x1500C896),
-                        unselectedIconColor = BrandSecondaryText,
-                        unselectedTextColor = BrandSecondaryText
-                    )
-                )
-                NavigationBarItem(
-                    selected = activeTab == ActiveTab.Profile,
-                    onClick = { viewModel.activeTab.value = ActiveTab.Profile },
-                    icon = { Icon(Icons.Default.AccountCircle, "Profile") },
-                    label = { Text("Profile") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = BrandPrimary,
-                        selectedTextColor = BrandPrimary,
-                        indicatorColor = Color(0x1500C896),
-                        unselectedIconColor = BrandSecondaryText,
-                        unselectedTextColor = BrandSecondaryText
-                    )
-                )
+
+                    Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                        menuOptions.forEach { (label, icon, tab) ->
+                            val isSelected = activeTab == tab
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) BrandPrimary.copy(alpha = 0.1f) else Color.Transparent)
+                                    .clickable {
+                                        viewModel.activeTab.value = tab
+                                        scope.launch { drawerState.close() }
+                                    }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(icon, null, tint = if (isSelected) BrandPrimary else BrandSecondaryText, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Text(label, fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold, color = if (isSelected) BrandPrimary else BrandDark, fontSize = 14.sp)
+                            }
+                        }
+
+                        Divider(modifier = Modifier.padding(vertical = 12.dp), color = BrandBorder)
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    scope.launch { drawerState.close() }
+                                    try {
+                                        val m = "Support inquiry from rider: ${riderDetail?.name ?: ""}"
+                                        val u = "https://wa.me/8801642912431?text=" + URLEncoder.encode(m, "UTF-8")
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u)))
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "WhatsApp is not installed!", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.HelpOutline, null, tint = BrandSecondaryText, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("Help & Support", fontWeight = FontWeight.Bold, color = BrandDark, fontSize = 14.sp)
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                scope.launch { drawerState.close() }
+                                viewModel.logout(context)
+                            }
+                            .padding(24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Logout, null, tint = BrandDanger, modifier = Modifier.size(22.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("Logout Partner", fontWeight = FontWeight.Black, color = BrandDanger, fontSize = 14.sp)
+                    }
+                }
             }
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            when (activeTab) {
-                ActiveTab.Home -> HomeTab(viewModel)
-                ActiveTab.Wallet -> WalletTab(viewModel)
-                ActiveTab.Profile -> ProfileTab(viewModel)
+        },
+        gesturesEnabled = true
+    ) {
+        Scaffold(
+            containerColor = BrandBackground,
+            bottomBar = {
+                NavigationBar(
+                    containerColor = Color.White,
+                    tonalElevation = 6.dp,
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars).shadow(12.dp, spotColor = BrandDark.copy(alpha = 0.05f))
+                ) {
+                    NavigationBarItem(
+                        selected = activeTab == ActiveTab.Home,
+                        onClick = { viewModel.activeTab.value = ActiveTab.Home },
+                        icon = { Icon(if (activeTab == ActiveTab.Home) Icons.Filled.GridView else Icons.Outlined.GridView, null) },
+                        label = { Text("Home", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.White,
+                            selectedTextColor = BrandPrimary,
+                            indicatorColor = BrandPrimary,
+                            unselectedIconColor = BrandSecondaryText,
+                            unselectedTextColor = BrandSecondaryText
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = activeTab == ActiveTab.Orders,
+                        onClick = { viewModel.activeTab.value = ActiveTab.Orders },
+                        icon = { Icon(if (activeTab == ActiveTab.Orders) Icons.Filled.ListAlt else Icons.Outlined.ListAlt, null) },
+                        label = { Text("Orders", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.White,
+                            selectedTextColor = BrandPrimary,
+                            indicatorColor = BrandPrimary,
+                            unselectedIconColor = BrandSecondaryText,
+                            unselectedTextColor = BrandSecondaryText
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = activeTab == ActiveTab.Wallet,
+                        onClick = { viewModel.activeTab.value = ActiveTab.Wallet },
+                        icon = { Icon(if (activeTab == ActiveTab.Wallet) Icons.Filled.AccountBalanceWallet else Icons.Outlined.AccountBalanceWallet, null) },
+                        label = { Text("Wallet", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.White,
+                            selectedTextColor = BrandPrimary,
+                            indicatorColor = BrandPrimary,
+                            unselectedIconColor = BrandSecondaryText,
+                            unselectedTextColor = BrandSecondaryText
+                        )
+                    )
+                    NavigationBarItem(
+                        selected = activeTab == ActiveTab.Profile,
+                        onClick = { viewModel.activeTab.value = ActiveTab.Profile },
+                        icon = { Icon(if (activeTab == ActiveTab.Profile) Icons.Filled.Person else Icons.Outlined.Person, null) },
+                        label = { Text("Profile", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.White,
+                            selectedTextColor = BrandPrimary,
+                            indicatorColor = BrandPrimary,
+                            unselectedIconColor = BrandSecondaryText,
+                            unselectedTextColor = BrandSecondaryText
+                        )
+                    )
+                }
+            }
+        ) { padding ->
+            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                when (activeTab) {
+                    ActiveTab.Home -> HomeTab(viewModel, onMenuClick = { scope.launch { drawerState.open() } })
+                    ActiveTab.Orders -> OrdersTab(viewModel, onMenuClick = { scope.launch { drawerState.open() } })
+                    ActiveTab.Wallet -> WalletTab(viewModel, onMenuClick = { scope.launch { drawerState.open() } })
+                    ActiveTab.Profile -> ProfileTab(viewModel, onMenuClick = { scope.launch { drawerState.open() } })
+                }
             }
         }
     }
 }
 
 @Composable
-fun HomeTab(viewModel: RiderViewModel) {
+fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
     val context = LocalContext.current
     val isOnline by viewModel.isOnline.collectAsState()
     val activeOrders by viewModel.activeOrders.collectAsState()
     val currentActiveOrderId by viewModel.currentActiveOrderId.collectAsState()
+    val riderDetail by viewModel.currentRider.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Ki-Lagbe",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 22.sp,
-                        color = BrandDark
-                    )
-                    Text(
-                        text = " Rider",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 22.sp,
-                        color = BrandPrimary
-                    )
-                }
+    // 1. OFFLINE WELCOME VIEW INTEGRATION
+    if (!isOnline && activeOrders.isEmpty()) {
+        WelcomeScreen(viewModel, onMenuClick)
+        return
+    }
 
-                Button(
-                    onClick = { viewModel.setOnlineStatus(!isOnline, context) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isOnline) BrandPrimary else Color(0xFFFF4757)
-                    ),
-                    shape = RoundedCornerShape(20.dp),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                    modifier = Modifier.height(36.dp)
-                ) {
-                    Icon(
-                        imageVector = if (isOnline) Icons.Default.NotificationsActive else Icons.Default.NotificationsOff,
-                        contentDescription = "Online Status",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isOnline) "ONLINE" else "OFFLINE",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
-                    )
-                }
-            }
-        }
+    // 2. ACTIVE ORDER SCREEN LOGIC
+    if (activeOrders.isNotEmpty()) {
+        val activeOrder = activeOrders.find { it.id == currentActiveOrderId } ?: activeOrders.first()
+        var actionProgressing by remember { mutableStateOf(false) }
 
-        if (activeOrders.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.FreeBreakfast,
-                        contentDescription = "No Tasks",
-                        tint = BrandBorder,
-                        modifier = Modifier.size(70.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "No Active Tasks",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = BrandDark.copy(alpha = 0.5f)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Stay online to receive new orders.",
-                        fontSize = 13.sp,
-                        color = BrandSecondaryText
-                    )
-                }
-            }
-        } else {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-            ) {
-                items(activeOrders) { order ->
-                    val isSelected = order.id == currentActiveOrderId
+        if (activeOrder.status == "Assigned" || activeOrder.status == "Pending") {
+            // Screen 1: New Instant Order Request Layout
+            Scaffold(
+                containerColor = BrandBackground,
+                topBar = {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(if (isSelected) BrandPrimary else Color.White)
-                            .border(
-                                width = 1.dp,
-                                color = if (isSelected) BrandPrimary else BrandBorder,
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                            .clickable { viewModel.currentActiveOrderId.value = order.id }
-                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                        modifier = Modifier.fillMaxWidth().statusBarsPadding().background(Color.White).padding(horizontal = 20.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.LocalShipping,
-                            contentDescription = "Order",
-                            tint = if (isSelected) Color.White else BrandSecondaryText,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "#${getOrderIdDisplay(order)}",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = if (isSelected) Color.White else BrandDark
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { onMenuClick() }
+                        ) {
+                            Icon(Icons.Default.Menu, "Menu", tint = BrandDark, modifier = Modifier.size(24.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("Ki-Lagbe", fontWeight = FontWeight.Black, fontSize = 20.sp, color = BrandDark)
+                            Text(" Rider", fontWeight = FontWeight.Black, fontSize = 20.sp, color = BrandPrimary)
+                        }
+                        Box(contentAlignment = Alignment.TopEnd) {
+                            IconButton(onClick = { Toast.makeText(context, "No new notifications", Toast.LENGTH_SHORT).show() }) {
+                                Icon(Icons.Default.Notifications, null, tint = BrandDark, modifier = Modifier.size(24.dp))
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .clip(CircleShape)
+                                    .background(BrandDanger),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("3", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            ) { padding ->
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+                    // Good Morning Rased Green Card Banner
+                    item {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = BrandPrimary),
+                            shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("Good Morning, ${riderDetail?.name ?: "Partner"} 👋", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text("Stay safe. Deliver smile 😉", fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f))
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(Color.White)
+                                        .clickable { viewModel.setOnlineStatus(false, context) }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(BrandPrimary))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("ONLINE", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = BrandPrimary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Main Order Card Details
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(24.dp),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).border(1.dp, BrandBorder, RoundedCornerShape(24.dp))
+                        ) {
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Instant Order Queue", fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, color = BrandDark)
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color(0xFFFEF3C7))
+                                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Text("#${getOrderIdDisplay(activeOrder)}", fontWeight = FontWeight.Black, color = Color(0xFFD97706), fontSize = 11.sp)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Divider(color = BrandBorder)
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // User details row
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("CUSTOMER DETAILS", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                        Text(activeOrder.name, fontWeight = FontWeight.Black, fontSize = 15.sp, color = BrandDark)
+                                        Text(activeOrder.phone, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp, color = BrandPrimary)
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            try {
+                                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${activeOrder.phone}"))
+                                                context.startActivity(intent)
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, "Dialer failed to initiate", Toast.LENGTH_SHORT).show()
+                                            }
+                                        },
+                                        modifier = Modifier.background(BrandPrimary.copy(alpha = 0.1f), CircleShape)
+                                    ) {
+                                        Icon(Icons.Default.Call, null, tint = BrandPrimary)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(14.dp))
+
+                                // Dropoff target location
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Place, null, tint = BrandDanger, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Column {
+                                        Text("DELIVERY TARGET", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                        Text(activeOrder.address.ifEmpty { activeOrder.area }, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+                                    }
+                                }
+
+                                if (activeOrder.note.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(Color(0xFFFFFBEB))
+                                            .border(1.dp, Color(0xFFFEF3C7), RoundedCornerShape(12.dp))
+                                            .padding(10.dp)
+                                    ) {
+                                        Text("Rider Instruction: ${activeOrder.note}", fontSize = 11.sp, color = Color(0xFFB45309), fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(14.dp))
+                                Divider(color = BrandBorder)
+                                Spacer(modifier = Modifier.height(14.dp))
+
+                                // Table Items
+                                Text("OUTLET DETAILS & PRODUCT PARCEL", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                activeOrder.items.forEach { item ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("${item.qty}x ${item.name}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+                                        Text(item.source, fontSize = 11.sp, color = BrandSecondaryText, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(14.dp))
+                                Divider(color = BrandBorder)
+                                Spacer(modifier = Modifier.height(14.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("COLLECT FROM CUSTOMER", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                        Text("Payable COD Cash", fontSize = 11.sp, color = BrandDanger, fontWeight = FontWeight.Bold)
+                                    }
+                                    Text("৳${activeOrder.total.toInt()}", fontSize = 24.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                                }
+                            }
+                        }
+                    }
+
+                    // Bottom Action Panel
+                    item {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Button(
+                                onClick = { viewModel.setOnlineStatus(false, context) },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier.weight(0.4f).height(54.dp).border(1.dp, BrandDanger, RoundedCornerShape(16.dp))
+                            ) {
+                                Text("REJECT", color = BrandDanger, fontWeight = FontWeight.ExtraBold)
+                            }
+
+                            Button(
+                                onClick = { viewModel.acceptOrder(activeOrder.id) },
+                                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier.weight(0.6f).height(54.dp).shadow(8.dp, RoundedCornerShape(16.dp), spotColor = BrandPrimary)
+                            ) {
+                                Icon(Icons.Default.Check, null, tint = Color.White)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("ACCEPT DISPATCH", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+                            }
+                        }
                     }
                 }
             }
-
-            val selectedOrder = activeOrders.find { it.id == currentActiveOrderId }
-            selectedOrder?.let { order ->
-                var actionProgressing by remember { mutableStateOf(false) }
-
+        } else {
+            // Screen 4: Accepted / In-Progress Order Detailed Screen
+            Scaffold(
+                containerColor = BrandBackground,
+                topBar = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().statusBarsPadding().background(Color.White).padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = { viewModel.activeTab.value = ActiveTab.Home }) {
+                                Icon(Icons.Default.ArrowBack, null, tint = BrandDark)
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Delivery Tracking", fontWeight = FontWeight.Black, fontSize = 18.sp, color = BrandDark)
+                        }
+                        IconButton(
+                            onClick = {
+                                try {
+                                    val m = "Support needed for ongoing delivery #${getOrderIdDisplay(activeOrder)}"
+                                    val u = "https://wa.me/8801642912431?text=" + URLEncoder.encode(m, "UTF-8")
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u)))
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "WhatsApp is not installed!", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.SupportAgent, null, tint = BrandPrimary)
+                        }
+                    }
+                }
+            ) { padding ->
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    contentPadding = PaddingValues(0.dp, 0.dp, 0.dp, 20.dp)
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentPadding = PaddingValues(16.dp)
                 ) {
                     item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(BrandPrimary.copy(alpha = 0.12f))
-                                .padding(horizontal = 20.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.fillMaxWidth().border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
                         ) {
-                            Text(
-                                text = "ORDER ID: #${getOrderIdDisplay(order)}",
-                                fontWeight = FontWeight.Black,
-                                fontSize = 15.sp,
-                                color = BrandPrimary,
-                                letterSpacing = 0.5.sp
-                            )
-                            OrderTimerText(assignedAt = if (order.riderAssignedAt != 0L) order.riderAssignedAt else order.time)
+                            Column(modifier = Modifier.padding(18.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("ORDER IDENTIFIER", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                        Text("#${getOrderIdDisplay(activeOrder)}", fontWeight = FontWeight.Black, fontSize = 15.sp, color = BrandDark)
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(BrandPrimary.copy(alpha = 0.12f))
+                                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(activeOrder.status.uppercase(), fontWeight = FontWeight.Black, color = BrandPrimary, fontSize = 10.sp)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Divider(color = BrandBorder)
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("RECIPIENT CUSTOMER", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                        Text(activeOrder.name, fontWeight = FontWeight.Black, fontSize = 15.sp, color = BrandDark)
+                                        Text(activeOrder.phone, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = BrandPrimary)
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${activeOrder.phone}"))
+                                            context.startActivity(intent)
+                                        },
+                                        modifier = Modifier.background(BrandPrimary.copy(alpha = 0.1f), CircleShape)
+                                    ) {
+                                        Icon(Icons.Default.Call, null, tint = BrandPrimary)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Place, null, tint = BrandDanger, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Column {
+                                        Text("DELIVERY PLACE", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                        Text(activeOrder.address.ifEmpty { activeOrder.area }, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Divider(color = BrandBorder)
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("COLLECT ON ARRIVAL", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                    Text("৳${activeOrder.total.toInt()}", fontSize = 20.sp, fontWeight = FontWeight.Black, color = BrandDanger)
+                                }
+                            }
                         }
+                    }
 
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(20.dp),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 16.dp)
+                    // GPS open map section
+                    item {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth().border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Column {
-                                            Text(
-                                                text = order.name,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                fontSize = 18.sp,
-                                                color = BrandDark
-                                            )
-                                            Text(
-                                                text = order.phone,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 14.sp,
-                                                color = BrandPrimary,
-                                                modifier = Modifier.padding(top = 2.dp)
-                                            )
-                                        }
-
-                                        IconButton(
-                                            onClick = {
-                                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${order.phone}"))
-                                                context.startActivity(intent)
-                                            },
-                                            modifier = Modifier
-                                                .size(46.dp)
-                                                .clip(CircleShape)
-                                                .background(BrandDark)
-                                        ) {
-                                            Icon(Icons.Default.Call, "Dial", tint = Color.White, modifier = Modifier.size(20.dp))
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Divider(color = Color(0xFFF0F0F0))
-                                    Spacer(modifier = Modifier.height(12.dp))
-
-                                    Row(verticalAlignment = Alignment.Top) {
-                                        Icon(
-                                            imageVector = Icons.Default.Place,
-                                            contentDescription = "Pin",
-                                            tint = Color(0xFFFF4757),
-                                            modifier = Modifier
-                                                .size(18.dp)
-                                                .padding(top = 2.dp)
-                                        )
-                                        Column(modifier = Modifier.padding(start = 6.dp)) {
-                                            Text(
-                                                text = order.address.ifEmpty { order.area },
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 13.sp,
-                                                color = BrandSecondaryText,
-                                                lineHeight = 18.sp
-                                            )
-                                            
-                                            if (order.note.isNotEmpty()) {
-                                                Spacer(modifier = Modifier.height(8.dp))
-                                                Box(
-                                                    modifier = Modifier
-                                                        .clip(RoundedCornerShape(8.dp))
-                                                        .background(Color(0xFFFFF3E0))
-                                                        .border(
-                                                            width = 1.dp,
-                                                            color = Color(0xFFF39C12),
-                                                            shape = RoundedCornerShape(8.dp)
-                                                        )
-                                                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                                                ) {
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        Icon(Icons.Default.Comment, "Note", tint = Color(0xFFD35400), modifier = Modifier.size(14.dp))
-                                                        Text(
-                                                            text = " Note: ${order.note}",
-                                                            fontSize = 11.sp,
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = Color(0xFFD35400)
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
+                                Column {
+                                    Text("ROUTE NAVIGATION", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                    Text("Client Address in Map", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BrandDark)
                                 }
-                            }
-
-                            Text(
-                                text = "PICKUP ITEMS & SOURCE",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
-                                color = BrandSecondaryText,
-                                modifier = Modifier.padding(start = 4.dp, bottom = 10.dp)
-                            )
-
-                            order.items.forEach { item ->
-                                Card(
-                                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                                    shape = RoundedCornerShape(16.dp),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(bottom = 10.dp)
-                                        .border(1.dp, Color(0xFFF0F0F0), RoundedCornerShape(16.dp))
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(12.dp),
-                                        verticalAlignment = Alignment.Top
-                                    ) {
-                                        Box(
-                                            contentAlignment = Alignment.Center,
-                                            modifier = Modifier
-                                                .size(28.dp)
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(BrandDark)
-                                        ) {
-                                            Text(
-                                                text = "${item.qty}",
-                                                color = Color.White,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                fontSize = 13.sp
-                                            )
-                                        }
-
-                                        Spacer(modifier = Modifier.width(12.dp))
-
-                                        AsyncImage(
-                                            model = item.img.ifEmpty { "https://via.placeholder.com/60" },
-                                            contentDescription = item.name,
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .size(50.dp)
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .border(1.dp, BrandBorder, RoundedCornerShape(10.dp))
-                                        )
-
-                                        Spacer(modifier = Modifier.width(12.dp))
-
-                                        Column(modifier = Modifier.weight(1.0f)) {
-                                            Text(
-                                                text = item.name,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                fontSize = 13.sp,
-                                                color = BrandDark
-                                            )
-                                            if (item.variant.isNotEmpty()) {
-                                                Text(
-                                                    text = "Option: ${item.variant}",
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    color = BrandSecondaryText,
-                                                    modifier = Modifier.padding(top = 1.dp)
-                                                )
-                                            }
-                                            Text(
-                                                text = "🏪 Shop: ${item.source}",
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = BrandDark.copy(alpha = 0.8f),
-                                                modifier = Modifier
-                                                    .padding(top = 4.dp)
-                                                    .clip(RoundedCornerShape(4.dp))
-                                                    .background(BrandBackground)
-                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                                            )
-                                            Text(
-                                                text = "Pay to Shop: ৳${item.buy * item.qty} (৳${item.buy} x ${item.qty})",
-                                                fontWeight = FontWeight.Black,
-                                                fontSize = 12.sp,
-                                                color = Color(0xFFFF4757),
-                                                modifier = Modifier.padding(top = 4.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Text(
-                                text = "PAYMENT INFO",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
-                                color = BrandSecondaryText,
-                                modifier = Modifier.padding(start = 4.dp, bottom = 10.dp)
-                            )
-
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(20.dp),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                                modifier = Modifier.fillMaxWidth().border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    val riderFee = order.riderFee ?: order.deliveryFee
-                                    val surcharge = order.surcharge
-                                    val handlingFee = order.handlingFee
-                                    val totalPaymentExpected = order.total
-                                    val subtotal = if (order.subtotal > 0.0) order.subtotal else (order.total - riderFee - surcharge - handlingFee)
-
-                                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Items Sub-total", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BrandSecondaryText)
-                                        Text("৳${subtotal.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
-                                    }
-                                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Delivery Fee", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BrandSecondaryText)
-                                        Text("৳${riderFee.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
-                                    }
-                                    if (handlingFee > 0.0) {
-                                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                            Text("Handling Fee", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BrandSecondaryText)
-                                            Text("৳${handlingFee.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
-                                        }
-                                    }
-                                    if (surcharge > 0.0) {
-                                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                            Text("Surcharge (Rain/Night)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BrandPrimary)
-                                            Text("৳${surcharge.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandPrimary)
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    Divider(color = BrandBorder)
-                                    Spacer(modifier = Modifier.height(12.dp))
-
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                        Text("COLLECT FROM USER", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = BrandSecondaryText)
-                                        Text("৳${totalPaymentExpected.toInt()}", fontSize = 28.sp, fontWeight = FontWeight.Black, color = BrandDark)
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                Button(
-                                    onClick = {
-                                        val nextState = when (order.status) {
-                                            "Assigned", "Accepted", "Pending" -> "Processing"
-                                            "Processing" -> "On the Way"
-                                            "On the Way" -> "Delivered"
-                                            else -> ""
-                                        }
-                                        if (nextState.isNotEmpty()) {
-                                            if (nextState == "Delivered") {
-                                                actionProgressing = true
-                                            } else {
-                                                viewModel.updateStatus(order.id, nextState) { }
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(54.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = when (order.status) {
-                                            "Assigned", "Accepted", "Pending" -> BrandPrimary
-                                            "Processing" -> Color(0xFFF39C12)
-                                            "On the Way" -> BrandAccent
-                                            else -> Color.DarkGray
-                                        }
-                                    )
-                                ) {
-                                    val textLabel = when (order.status) {
-                                        "Assigned", "Accepted", "Pending" -> "ARRIVED AT SHOP"
-                                        "Processing" -> "ON THE WAY"
-                                        "On the Way" -> "FINISH DELIVERY"
-                                        else -> "CONTINUE"
-                                    }
-                                    Text(textLabel, fontWeight = FontWeight.Black, fontSize = 15.sp)
-                                }
-
                                 Button(
                                     onClick = {
                                         try {
-                                            val query = "Hello Admin, I need help with Order #${getOrderIdDisplay(order)}"
-                                            val url = "https://wa.me/8801642912431?text=" + URLEncoder.encode(query, "UTF-8")
-                                            val whatsappIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                            context.startActivity(whatsappIntent)
+                                            val mapUri = Uri.parse("geo:0,0?q=" + Uri.encode(activeOrder.address.ifEmpty { activeOrder.area }))
+                                            val mapIntent = Intent(Intent.ACTION_VIEW, mapUri)
+                                            mapIntent.setPackage("com.google.android.apps.maps")
+                                            context.startActivity(mapIntent)
                                         } catch (e: Exception) {
-                                            Toast.makeText(context, "WhatsApp is not installed!", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "Google Maps app is not installed", Toast.LENGTH_SHORT).show()
                                         }
                                     },
-                                    modifier = Modifier.size(54.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
-                                    contentPadding = PaddingValues(0.dp)
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.border(1.dp, BrandPrimary, RoundedCornerShape(10.dp)),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                                 ) {
-                                    Icon(Icons.Default.SupportAgent, "WhatsApp Support", tint = Color.White, modifier = Modifier.size(24.dp))
+                                    Text("OPEN IN MAP", fontSize = 10.sp, color = BrandPrimary, fontWeight = FontWeight.ExtraBold)
                                 }
+                            }
+                        }
+                    }
+
+                    // Progress Timeline Stepper
+                    item {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Text("COMPLETION STEPS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        ) {
+                            val activeIndex = when (activeOrder.status) {
+                                "Accepted" -> 1
+                                "Processing" -> 2
+                                "On the Way" -> 3
+                                else -> 1
+                            }
+
+                            val steps = listOf(
+                                "Courier Assigned Request Complete",
+                                "Merchant Food Outlet Pickup Complete",
+                                "Rider Safe Transit and In Route",
+                                "Final COD Cash Collection & Delivery"
+                            )
+
+                            steps.forEachIndexed { sIndex, stepLabel ->
+                                val done = sIndex < activeIndex
+                                val cur = sIndex == activeIndex
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(CircleShape)
+                                            .background(if (done) BrandPrimary else if (cur) Color(0xFFFFB000) else BrandBorder),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (done) {
+                                            Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(12.dp))
+                                        } else {
+                                            Text("${sIndex + 1}", color = if (cur) Color.White else BrandSecondaryText, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        stepLabel,
+                                        fontSize = 12.sp,
+                                        fontWeight = if (cur) FontWeight.ExtraBold else FontWeight.Bold,
+                                        color = if (done || cur) BrandDark else BrandSecondaryText
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Action buttons segment
+                    item {
+                        Spacer(modifier = Modifier.height(30.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Button(
+                                onClick = {
+                                    val nextState = when (activeOrder.status) {
+                                        "Assigned", "Accepted", "Pending" -> "Processing"
+                                        "Processing" -> "On the Way"
+                                        "On the Way" -> "Delivered"
+                                        else -> ""
+                                    }
+                                    if (nextState.isNotEmpty()) {
+                                        if (nextState == "Delivered") {
+                                            actionProgressing = true
+                                        } else {
+                                            viewModel.updateStatus(activeOrder.id, nextState) { }
+                                        }
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = when (activeOrder.status) {
+                                        "Assigned", "Accepted", "Pending" -> BrandPrimary
+                                        "Processing" -> Color(0xFFFFB000)
+                                        else -> BrandPrimary
+                                    }
+                                ),
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier.weight(1f).height(54.dp).shadow(6.dp, RoundedCornerShape(16.dp))
+                            ) {
+                                val textLabel = when (activeOrder.status) {
+                                    "Assigned", "Accepted", "Pending" -> "ARRIVED AT SHOP"
+                                    "Processing" -> "DEPARTED / ON THE WAY"
+                                    "On the Way" -> "SUCCESSFULLY DELIVERED"
+                                    else -> "PROCEED"
+                                }
+                                Text(textLabel, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = Color.White)
                             }
                         }
                     }
@@ -1230,23 +1254,23 @@ fun HomeTab(viewModel: RiderViewModel) {
                 if (actionProgressing) {
                     AlertDialog(
                         onDismissRequest = { actionProgressing = false },
-                        title = { Text("Complete Delivery?", fontWeight = FontWeight.Bold, color = Color(0xFF2D3436)) },
-                        text = { Text("Did you collect the full cash and deliver all items to the customer?", fontSize = 14.sp) },
+                        title = { Text("Complete Handover?", fontWeight = FontWeight.Black, color = BrandDark) },
+                        text = { Text("Are you sure you hand-delivered all items safely and collected Cash on Delivery?") },
                         confirmButton = {
                             TextButton(onClick = {
                                 actionProgressing = false
-                                viewModel.updateStatus(order.id, "Delivered") { success ->
+                                viewModel.updateStatus(activeOrder.id, "Delivered") { success ->
                                     if (success) {
-                                        Toast.makeText(context, "Order Delivered successfully!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Order successfully localized!", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }) {
-                                Text("YES, DELIVERED", color = Color(0xFF00B894), fontWeight = FontWeight.Black)
+                                Text("CONFIRM HANDOVER", color = BrandPrimary, fontWeight = FontWeight.ExtraBold)
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { actionProgressing = false }) {
-                                Text("CANCEL", color = Color.Gray, fontWeight = FontWeight.SemiBold)
+                                Text("CANCEL", color = BrandSecondaryText)
                             }
                         },
                         containerColor = Color.White,
@@ -1255,38 +1279,422 @@ fun HomeTab(viewModel: RiderViewModel) {
                 }
             }
         }
+        return
     }
-}
 
-@Composable
-fun OrderTimerText(assignedAt: Long) {
-    var elapsedSeconds by remember(assignedAt) { mutableStateOf((System.currentTimeMillis() - assignedAt) / 1000) }
-    
-    LaunchedEffect(assignedAt) {
-        while (true) {
-            delay(1000)
-            elapsedSeconds = (System.currentTimeMillis() - assignedAt) / 1000
+    // 3. SCREEN 2: STANDALONE MY PERFORMANCE DASHBOARD VIEW
+    Scaffold(
+        containerColor = BrandBackground,
+        topBar = {
+            Row(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding().background(Color.White).padding(horizontal = 20.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { onMenuClick() }
+                ) {
+                    Icon(Icons.Default.Menu, "Menu", tint = BrandDark, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text("My Performance", fontWeight = FontWeight.Black, fontSize = 19.sp, color = BrandDark)
+                }
+                IconButton(onClick = { Toast.makeText(context, "Opening Calendar", Toast.LENGTH_SHORT).show() }) {
+                    Icon(Icons.Outlined.CalendarToday, null, tint = BrandDark, modifier = Modifier.size(22.dp))
+                }
+            }
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(bottom = 24.dp)
+        ) {
+            // "Today" selection row
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White)
+                            .border(1.dp, BrandBorder, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Today", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = BrandDark)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(Icons.Default.ArrowDropDown, null, tint = BrandDark, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                    Text("20 May, 2024", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                }
+            }
+
+            // Grid Layout stats card (Custom styled Screen 2 blocks)
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        // Total Earning
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFEFFFF4)),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.weight(1f).height(100.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Icon(Icons.Default.AccountBalanceWallet, null, tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                                }
+                                Column {
+                                    Text("৳1,250", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                                    Text("Total Earning", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                }
+                            }
+                        }
+
+                        // Completed Deliveries
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFEBF3FF)),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.weight(1f).height(100.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF2F80ED), modifier = Modifier.size(18.dp))
+                                }
+                                Column {
+                                    Text("18", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                                    Text("Completed Del.", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                }
+                            }
+                        }
+                    }
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        // Pending Orders
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7EC)),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.weight(1f).height(100.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Icon(Icons.Default.Schedule, null, tint = Color(0xFFD27B00), modifier = Modifier.size(18.dp))
+                                }
+                                Column {
+                                    Text("2", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                                    Text("Pending Orders", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                }
+                            }
+                        }
+
+                        // Cancelled Orders
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF0F0)),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.weight(1f).height(100.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Icon(Icons.Default.Cancel, null, tint = BrandDanger, modifier = Modifier.size(18.dp))
+                                }
+                                Column {
+                                    Text("0", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                                    Text("Cancelled Orders", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Online Hours Chart Card segment
+            item {
+                Spacer(modifier = Modifier.height(18.dp))
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("ONLINE TIME", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                Text("7h 22m Today", fontSize = 15.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(BrandPrimary.copy(alpha = 0.12f))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text("20 May, 2024", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = BrandPrimary)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        OnlineHoursChartCanvas(modifier = Modifier.fillMaxWidth().height(160.dp))
+                    }
+                }
+            }
+
+            // Recent Activity lists
+            item {
+                Spacer(modifier = Modifier.height(18.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Recent Activity", fontSize = 14.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                    Text("View All", fontSize = 12.sp, fontWeight = FontWeight.Black, color = BrandPrimary, modifier = Modifier.clickable { })
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        // Delivered Log
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier.size(34.dp).clip(CircleShape).background(Color(0xFFEFFFF4)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.CheckCircle, null, tint = BrandPrimary, modifier = Modifier.size(16.dp))
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text("Order Delivered", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+                                    Text("#KL-2459", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                }
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("+৳50.00", fontSize = 12.sp, fontWeight = FontWeight.Black, color = BrandPrimary)
+                                Text("04:15 PM", fontSize = 10.sp, color = BrandSecondaryText)
+                            }
+                        }
+
+                        Divider(color = BrandBorder)
+
+                        // Accepted Log
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier.size(34.dp).clip(CircleShape).background(Color(0xFFEBF3FF)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.TwoWheeler, null, tint = Color(0xFF2F80ED), modifier = Modifier.size(16.dp))
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text("Order Accepted", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+                                    Text("#KL-2458", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                }
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("In Route", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2F80ED))
+                                Text("04:10 PM", fontSize = 10.sp, color = BrandSecondaryText)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
-    
-    val minutes = elapsedSeconds / 60
-    val seconds = elapsedSeconds % 60
-    val formattedTime = String.format(Locale.getDefault(), "%02d:%02d Mins Ago", minutes, seconds)
-    
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Schedule, "Time elapsed", tint = BrandDark, modifier = Modifier.size(16.dp))
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = formattedTime,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = BrandDark
-        )
+}
+
+@Composable
+fun OrdersTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
+    val allOrders by viewModel.allOrdersList.collectAsState()
+    var selectedFilter by remember { mutableStateOf("All") }
+    var activeOrderDetails by remember { mutableStateOf<Order?>(null) }
+
+    val filtered = remember(allOrders, selectedFilter) {
+        when (selectedFilter) {
+            "Pending" -> allOrders.filter { it.status in listOf("Assigned", "Accepted", "Pending", "Processing", "On the Way") }
+            "Completed" -> allOrders.filter { it.status == "Delivered" }
+            "Cancelled" -> allOrders.filter { it.status == "Cancelled" }
+            else -> allOrders
+        }
+    }
+
+    Scaffold(
+        containerColor = BrandBackground,
+        topBar = {
+            Row(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding().background(Color.White).padding(horizontal = 20.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { onMenuClick() }
+                ) {
+                    Icon(Icons.Default.Menu, "Menu", tint = BrandDark, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text("My Deliveries", fontWeight = FontWeight.Black, fontSize = 19.sp, color = BrandDark)
+                }
+                IconButton(onClick = { }) {
+                    Icon(Icons.Default.Search, null, tint = BrandDark, modifier = Modifier.size(22.dp))
+                }
+            }
+        }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // Sleeker Chip Selector
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val chips = listOf("All", "Pending", "Completed", "Cancelled")
+                chips.forEach { chip ->
+                    val isSelected = selectedFilter == chip
+                    val containerBg = if (isSelected) BrandDark else Color.White
+                    val textFg = if (isSelected) Color.White else BrandSecondaryText
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(containerBg)
+                            .border(1.dp, if (isSelected) BrandDark else BrandBorder, RoundedCornerShape(20.dp))
+                            .clickable { selectedFilter = chip }
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Text(chip, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = textFg)
+                    }
+                }
+            }
+
+            if (filtered.isEmpty()) {
+                Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.HourglassDisabled, null, tint = BrandSecondaryText.copy(alpha = 0.4f), modifier = Modifier.size(56.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("No deliveries found", fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(filtered) { order ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, BrandBorder, RoundedCornerShape(18.dp))
+                                .clickable { activeOrderDetails = order }
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(34.dp)
+                                                .clip(CircleShape)
+                                                .background(BrandPrimary.copy(alpha = 0.08f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(Icons.Default.TwoWheeler, null, tint = BrandPrimary, modifier = Modifier.size(16.dp))
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text("Order ID #${getOrderIdDisplay(order)}", fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = BrandDark)
+                                            val orderDateStr = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(order.time))
+                                            Text(orderDateStr, fontSize = 10.sp, color = BrandSecondaryText, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                    
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(
+                                                when (order.status) {
+                                                    "Delivered" -> BrandPrimary.copy(alpha = 0.12f)
+                                                    "Cancelled" -> BrandDanger.copy(alpha = 0.12f)
+                                                    else -> BrandWarning.copy(alpha = 0.12f)
+                                                }
+                                            )
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        val badgeColor = when (order.status) {
+                                            "Delivered" -> BrandPrimary
+                                            "Cancelled" -> BrandDanger
+                                            else -> BrandWarning
+                                        }
+                                        Text(order.status.uppercase(), fontSize = 9.sp, fontWeight = FontWeight.Black, color = badgeColor)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = order.address.ifEmpty { order.area },
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrandDark,
+                                    maxLines = 1
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Divider(color = BrandBorder)
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text("CASH ON ARRIVAL", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                                        Text("৳${order.total.toInt()}", fontWeight = FontWeight.Black, fontSize = 16.sp, color = BrandDark)
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Details", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = BrandPrimary)
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(Icons.Default.ArrowForwardIos, null, tint = BrandPrimary, modifier = Modifier.size(10.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        activeOrderDetails?.let { order ->
+            HistoryStoryDialog(order = order, onDismiss = { activeOrderDetails = null })
+        }
     }
 }
 
 @Composable
-fun WalletTab(viewModel: RiderViewModel) {
+fun WalletTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
     val earnings by viewModel.walletEarnings.collectAsState()
     val collected by viewModel.walletCollected.collectAsState()
     val countDel by viewModel.walletDeliveredCount.collectAsState()
@@ -1296,293 +1704,169 @@ fun WalletTab(viewModel: RiderViewModel) {
     val filter by viewModel.selectedFilter.collectAsState()
 
     var activeLedgerDetails by remember { mutableStateOf<Order?>(null) }
+    val context = LocalContext.current
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(BrandPrimary)
-                .padding(vertical = 18.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "My Performance",
-                color = Color.White,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 20.sp,
-                letterSpacing = 0.5.sp
-            )
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            val filters = listOf("today" to "Today", "yesterday" to "Yesterday", "week" to "Last 7 Days")
-            filters.forEach { (tag, label) ->
-                val isSel = filter == tag
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (isSel) BrandDark else Color.White)
-                        .border(1.dp, if (isSel) BrandDark else BrandBorder, RoundedCornerShape(20.dp))
-                        .clickable { viewModel.setFilter(tag) }
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = label,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSel) Color.White else BrandSecondaryText
-                    )
-                }
-            }
-        }
-
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(20.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("TOTAL EARNING", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
-                        Text("৳${earnings.toInt()}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDark)
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("CASH COLLECTED", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
-                        Text("৳${collected.toInt()}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDark)
-                    }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("COMPLETED DELIVERIES", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
-                        Text("$countDel", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDark)
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("CANCELLED ORDERS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
-                        Text("$countCan", fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color(0xFFFF4757))
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
-        ) {
+    Scaffold(
+        containerColor = BrandBackground,
+        topBar = {
             Row(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.fillMaxWidth().statusBarsPadding().background(Color.White).padding(horizontal = 20.dp, vertical = 14.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Payments,
-                        contentDescription = "Payments",
-                        tint = Color(0xFFF39C12),
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        val dueText = if (dueAmount > 0.0) "Due Amount" else if (dueAmount < 0.0) "Company Owed" else "Balance Settled"
-                        val dueSub = if (dueAmount > 0.0) "You owe to company" else if (dueAmount < 0.0) "Company will pay you" else "All Cash Settled"
-                        Text(
-                            text = dueText,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 14.sp,
-                            color = BrandDark
-                        )
-                        Text(
-                            text = dueSub,
-                            fontSize = 10.sp,
-                            color = BrandSecondaryText,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { onMenuClick() }
+                ) {
+                    Icon(Icons.Default.Menu, "Menu", tint = BrandDark, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text("Partner Ledger", fontWeight = FontWeight.Black, fontSize = 19.sp, color = BrandDark)
                 }
-
-                val flowColor = if (dueAmount > 0.0) Color(0xFFFF4757) else if (dueAmount < 0.0) BrandPrimary else BrandDark
-                Text(
-                    text = "৳${Math.round(Math.abs(dueAmount))}",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 20.sp,
-                    color = flowColor
-                )
+                IconButton(onClick = { Toast.makeText(context, "Ledger synchronised", Toast.LENGTH_SHORT).show() }) {
+                    Icon(Icons.Default.Refresh, null, tint = BrandDark, modifier = Modifier.size(22.dp))
+                }
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "DUE TRANSACTIONS",
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp,
-            color = BrandSecondaryText,
-            modifier = Modifier.padding(start = 20.dp, bottom = 8.dp)
-        )
-
-        if (historyOrders.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            // Dropdowns for time selection
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = "No records for this period.",
-                    fontSize = 13.sp,
-                    color = BrandSecondaryText,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(historyOrders) { o ->
-                    val displayTime = if (o.status == "Delivered" && o.deliveredAt > 0L) {
-                        o.deliveredAt
-                    } else if (o.riderAssignedAt > 0L) {
-                        o.riderAssignedAt
-                    } else {
-                        o.time
+                val filters = listOf("today" to "Today", "yesterday" to "Yesterday", "week" to "Last 7 Days")
+                filters.forEach { (tag, label) ->
+                    val isSel = filter == tag
+                    val bg = if (isSel) BrandDark else Color.White
+                    val fg = if (isSel) Color.White else BrandSecondaryText
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(bg)
+                            .border(1.dp, if (isSel) BrandDark else BrandBorder, RoundedCornerShape(20.dp))
+                            .clickable { viewModel.setFilter(tag) }
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Text(label, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = fg)
                     }
-                    val timeStr = remember(displayTime) {
-                        val orderCal = java.util.Calendar.getInstance()
-                        orderCal.timeInMillis = displayTime
-                        
-                        val todayCal = java.util.Calendar.getInstance()
-                        val yesterdayCal = java.util.Calendar.getInstance()
-                        yesterdayCal.add(java.util.Calendar.DAY_OF_YEAR, -1)
-                        
-                        val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
-                        val timeOnly = timeFormat.format(java.util.Date(displayTime))
-                        
-                        if (orderCal.get(java.util.Calendar.YEAR) == todayCal.get(java.util.Calendar.YEAR) &&
-                            orderCal.get(java.util.Calendar.DAY_OF_YEAR) == todayCal.get(java.util.Calendar.DAY_OF_YEAR)) {
-                            "Today, $timeOnly"
-                        } else if (orderCal.get(java.util.Calendar.YEAR) == yesterdayCal.get(java.util.Calendar.YEAR) &&
-                            orderCal.get(java.util.Calendar.DAY_OF_YEAR) == yesterdayCal.get(java.util.Calendar.DAY_OF_YEAR)) {
-                            "Yesterday, $timeOnly"
-                        } else {
-                            val dateFormat = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault())
-                            dateFormat.format(java.util.Date(displayTime))
+                }
+            }
+
+            // Modern Balance Wallet Gradient Card
+            val gradient = Brush.linearGradient(colors = listOf(BrandPrimary, BrandAccent))
+            Card(
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                    .shadow(8.dp, RoundedCornerShape(24.dp), spotColor = BrandPrimary.copy(alpha = 0.2f))
+            ) {
+                Box(modifier = Modifier.fillMaxWidth().background(gradient).padding(24.dp)) {
+                    Column {
+                        Text("TOTAL EARNING BALANCE", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.82f), letterSpacing = 0.5.sp)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("৳${earnings.toInt()}", fontSize = 34.sp, fontWeight = FontWeight.Black, color = Color.White)
+                        Text("Settleable anytime on request", fontSize = 11.sp, color = Color.White.copy(alpha = 0.75f), fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
+                        Button(
+                            onClick = { Toast.makeText(context, "Withdrawal initiated!", Toast.LENGTH_SHORT).show() },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.align(Alignment.Start).height(40.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text("Withdraw to Bkash", color = BrandPrimary, fontWeight = FontWeight.Black, fontSize = 11.sp)
                         }
                     }
+                }
+            }
 
-                    val fee = o.riderFee ?: o.deliveryFee
-                    val totalIncome = fee + o.surcharge
-                    var shopBill = 0.0
-                    o.items.forEach { item -> shopBill += item.buy * item.qty }
+            // Performance Statistics layout (Cash Collected & Due Owed)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.weight(1f).border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text("Collected COD", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("৳${collected.toInt()}", fontSize = 16.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                    }
+                }
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.weight(1f).border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        val dueLabel = if (dueAmount > 0.0) "Due Owed" else "Settled"
+                        val flowColor = if (dueAmount > 0.0) BrandDanger else BrandPrimary
+                        Text(dueLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("৳${Math.round(Math.abs(dueAmount))}", fontSize = 16.sp, fontWeight = FontWeight.Black, color = flowColor)
+                    }
+                }
+            }
 
-                    val diff = o.total - (totalIncome + shopBill)
+            Text("TRANSACTION HISTORIES", fontWeight = FontWeight.Black, fontSize = 10.sp, color = BrandSecondaryText, modifier = Modifier.padding(start = 18.dp, bottom = 8.dp), letterSpacing = 0.5.sp)
 
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { activeLedgerDetails = o }
-                            .border(1.dp, BrandBorder, RoundedCornerShape(14.dp))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(14.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+            if (historyOrders.isEmpty()) {
+                Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                    Text("No logs found for this shift", fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(historyOrders) { o ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
+                                .clickable { activeLedgerDetails = o }
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(if (o.status == "Delivered") BrandBackground else Color(0xFFFFEAA7))
-                                ) {
-                                    Icon(
-                                        imageVector = if (o.status == "Delivered") Icons.Default.TwoWheeler else Icons.Default.Close,
-                                        contentDescription = o.status,
-                                        tint = if (o.status == "Delivered") BrandSecondaryText else Color(0xFFD35400),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(10.dp))
-
-                                Column {
-                                    Text(
-                                        text = "Delivery #${getOrderIdDisplay(o)}",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = BrandDark
-                                    )
-                                    Text(
-                                        text = if (o.status == "Delivered") timeStr else "$timeStr (Cancelled)",
-                                        fontSize = 10.sp,
-                                        color = BrandSecondaryText,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.padding(bottom = 2.dp)
-                                    )
-                                    if (o.status == "Delivered") {
-                                        Text(
-                                            text = "Cust. Bill: ৳${o.total.toInt()} | Shop Pay: ৳${shopBill.toInt()} | Your Fee: ৳${totalIncome.toInt()}",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = BrandPrimary
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                if (o.status == "Delivered") BrandPrimary.copy(alpha = 0.08f)
+                                                else BrandDanger.copy(alpha = 0.08f)
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = if (o.status == "Delivered") Icons.Default.CheckCircle else Icons.Default.Cancel,
+                                            contentDescription = null,
+                                            tint = if (o.status == "Delivered") BrandPrimary else BrandDanger,
+                                            modifier = Modifier.size(18.dp)
                                         )
                                     }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text("Order #${getOrderIdDisplay(o)}", fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = BrandDark)
+                                        Text(if (o.status == "Delivered") "Success Delivery" else "Cancelled", fontSize = 11.sp, color = BrandSecondaryText, fontWeight = FontWeight.Bold)
+                                    }
                                 }
-                            }
-
-                            Column(horizontalAlignment = Alignment.End) {
-                                if (o.status == "Delivered") {
+                                Column(horizontalAlignment = Alignment.End) {
                                     val chg = o.dueChangeCustom
-                                    val chgText = if (chg > 0.0) "+ ৳${chg.toInt()}" else if (chg < 0.0) "- ৳${Math.abs(chg).toInt()}" else "৳0"
-                                    val chgColor = if (chg > 0.0) Color(0xFFFF4757) else if (chg < 0.0) BrandPrimary else BrandDark
-
-                                    Text(
-                                        text = chgText,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = chgColor
-                                    )
-                                    Text(
-                                        text = if (o.isSettledCustom) "Settled" else "Balance: ৳${o.runningBal.toInt()}",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = if (o.isSettledCustom) BrandPrimary else BrandSecondaryText,
-                                        modifier = Modifier.padding(top = 2.dp)
-                                    )
-                                } else {
-                                    Text(
-                                        text = "৳0",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = BrandSecondaryText
-                                    )
-                                    Text(
-                                        text = if (o.isSettledCustom) "Settled" else "Balance: ৳${o.runningBal.toInt()}",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = if (o.isSettledCustom) BrandPrimary else BrandSecondaryText,
-                                        modifier = Modifier.padding(top = 2.dp)
-                                    )
+                                    val textVal = if (chg > 0.0) "+৳${chg.toInt()}" else if (chg < 0.0) "-৳${Math.abs(chg).toInt()}" else "৳0"
+                                    val textClr = if (chg > 0.0) BrandDanger else if (chg < 0.0) BrandPrimary else BrandDark
+                                    Text(textVal, fontWeight = FontWeight.Black, fontSize = 14.sp, color = textClr)
                                 }
                             }
                         }
@@ -1590,15 +1874,15 @@ fun WalletTab(viewModel: RiderViewModel) {
                 }
             }
         }
-    }
 
-    activeLedgerDetails?.let { order ->
-        HistoryStoryDialog(order = order, onDismiss = { activeLedgerDetails = null })
+        activeLedgerDetails?.let { order ->
+            HistoryStoryDialog(order = order, onDismiss = { activeLedgerDetails = null })
+        }
     }
 }
 
 @Composable
-fun ProfileTab(viewModel: RiderViewModel) {
+fun ProfileTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
     val context = LocalContext.current
     val rider by viewModel.currentRider.collectAsState()
     val pinState by viewModel.pinChangeState.collectAsState()
@@ -1617,210 +1901,219 @@ fun ProfileTab(viewModel: RiderViewModel) {
         }
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(0.dp, 0.dp, 0.dp, 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BrandPrimary)
-                    .padding(vertical = 18.dp),
-                contentAlignment = Alignment.Center
+    Scaffold(
+        containerColor = BrandBackground,
+        topBar = {
+            Row(
+                modifier = Modifier.fillMaxWidth().statusBarsPadding().background(Color.White).padding(horizontal = 20.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "My Profile",
-                    color = Color.White,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 20.sp,
-                    letterSpacing = 0.5.sp
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { onMenuClick() }
+                ) {
+                    Icon(Icons.Default.Menu, "Menu", tint = BrandDark, modifier = Modifier.size(24.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text("My Profile", fontWeight = FontWeight.Black, fontSize = 19.sp, color = BrandDark)
+                }
+                IconButton(onClick = { }) {
+                    Icon(Icons.Default.Settings, null, tint = BrandDark, modifier = Modifier.size(22.dp))
+                }
             }
         }
-
-        item {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp)
-            ) {
-                AsyncImage(
-                    model = rider?.photo?.ifEmpty { "https://via.placeholder.com/120" },
-                    contentDescription = "Avatar",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(110.dp)
-                        .clip(CircleShape)
-                        .border(3.dp, BrandPrimary, CircleShape)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = rider?.name ?: "Rider Name",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 22.sp,
-                    color = BrandDark
-                )
-
-                Text(
-                    text = rider?.phone ?: "",
-                    fontSize = 14.sp,
-                    color = BrandSecondaryText,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 2.dp)
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding).background(BrandBackground),
+            contentPadding = PaddingValues(bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item {
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(BrandPrimary)
-                        .padding(horizontal = 14.dp, vertical = 4.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Place, "Area", tint = Color.White, modifier = Modifier.size(14.dp))
-                        Text(
-                            text = " " + (rider?.area ?: "Area"),
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
-                    .border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "ACCOUNT STATUS",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandSecondaryText
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CheckCircle, "Active", tint = BrandPrimary, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Approved & Active", fontWeight = FontWeight.ExtraBold, color = BrandPrimary, fontSize = 14.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = BrandBorder)
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "IDENTITY VERIFICATION",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandSecondaryText
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.AssignmentInd, "NID", tint = BrandPrimary, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("NID Verified by Admin", fontWeight = FontWeight.ExtraBold, color = BrandDark.copy(alpha = 0.8f), fontSize = 14.sp)
-                    }
-                }
-            }
-        }
-
-        item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
-                    .border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "SECURITY",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrandSecondaryText,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    Text(
-                        text = "Change 6-Digit PIN",
-                        fontWeight = FontWeight.ExtraBold,
-                        color = BrandDark,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = oldPin,
-                        onValueChange = { oldPin = it },
-                        placeholder = { Text("Current PIN") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(24.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 10.dp)
-                            .height(52.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = newPin,
-                        onValueChange = { if (it.length <= 6) newPin = it },
-                        placeholder = { Text("New 6-Digit PIN") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp)
-                            .height(52.dp)
-                    )
-
-                    Button(
-                        onClick = {
-                            viewModel.changePin(oldPin, newPin)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(46.dp),
-                        shape = RoundedCornerShape(12.dp)
+                            .border(1.dp, BrandBorder, RoundedCornerShape(24.dp))
                     ) {
-                        Text("Update PIN", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.BottomEnd) {
+                                AsyncImage(
+                                    model = rider?.photo?.ifEmpty { "https://via.placeholder.com/120" },
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(100.dp)
+                                        .clip(CircleShape)
+                                        .border(3.dp, BrandPrimary, CircleShape)
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(26.dp)
+                                        .clip(CircleShape)
+                                        .background(BrandPrimary)
+                                        .border(2.dp, Color.White, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Verified,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Text(
+                                text = rider?.name ?: "Unknown Partner",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 21.sp,
+                                color = BrandDark
+                            )
+                            Text(
+                                text = rider?.phone ?: "",
+                                fontSize = 13.sp,
+                                color = BrandSecondaryText,
+                                fontWeight = FontWeight.Black,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(BrandPrimary.copy(alpha = 0.12f))
+                                    .padding(horizontal = 12.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = (rider?.area ?: "Unknown Area").uppercase(),
+                                    color = BrandPrimary,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
                     }
                 }
             }
-        }
 
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-            Button(
-                onClick = { viewModel.logout(context) },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4757)),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .height(56.dp)
-            ) {
-                Icon(Icons.Default.Logout, "Logout", tint = Color.White)
-                Spacer(modifier = Modifier.width(10.dp))
-                Text("LOGOUT ACCOUNT", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text(
+                            text = "VERIFICATION SYSTEMS",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            color = BrandSecondaryText,
+                            letterSpacing = 0.5.sp
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CheckCircle, null, tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("Approved & Active Duty", fontWeight = FontWeight.ExtraBold, color = BrandDark, fontSize = 13.sp)
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.AssignmentInd, null, tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("NID Verified by Administration", fontWeight = FontWeight.ExtraBold, color = BrandDark, fontSize = 13.sp)
+                        }
+                    }
+                }
+            }
+
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text(
+                            text = "SECURITY AND PIN SETTINGS",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            color = BrandSecondaryText,
+                            letterSpacing = 0.5.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("Change Secure 6-Digit PIN", fontWeight = FontWeight.Black, color = BrandDark, fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(14.dp))
+                        OutlinedTextField(
+                            value = oldPin,
+                            onValueChange = { oldPin = it },
+                            placeholder = { Text("Current PIN", fontWeight = FontWeight.Bold, color = BrandSecondaryText.copy(alpha = 0.6f)) },
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 10.dp)
+                                .height(52.dp)
+                        )
+                        OutlinedTextField(
+                            value = newPin,
+                            onValueChange = { if (it.length <= 6) newPin = it },
+                            placeholder = { Text("New 6-Digit PIN", fontWeight = FontWeight.Bold, color = BrandSecondaryText.copy(alpha = 0.6f)) },
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 14.dp)
+                                .height(52.dp)
+                        )
+                        Button(
+                            onClick = { viewModel.changePin(oldPin, newPin) },
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Text("Update Security Locks", fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, color = Color.White)
+                        }
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(18.dp))
+                Button(
+                    onClick = { viewModel.logout(context) },
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandDanger),
+                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(56.dp)
+                ) {
+                    Icon(Icons.Default.Logout, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("LOGOUT ACCOUNT", fontWeight = FontWeight.Black, color = Color.White, fontSize = 14.sp)
+                }
             }
         }
     }
@@ -1831,107 +2124,63 @@ fun NewOrderPopupDialog(order: Order, onAccept: () -> Unit) {
     Dialog(onDismissRequest = { }) {
         Card(
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(26.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    imageVector = Icons.Default.TwoWheeler,
-                    contentDescription = "New Order Alert",
-                    tint = BrandPrimary,
-                    modifier = Modifier.size(60.dp)
-                )
-
-                Text(
-                    text = "New Order!",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 24.sp,
-                    color = BrandDark,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+            Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(80.dp).clip(CircleShape).background(BrandPrimary.copy(alpha = 0.1f))
+                ) {
+                    Icon(Icons.Default.TwoWheeler, null, tint = BrandPrimary, modifier = Modifier.size(46.dp))
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Incoming Dispatch!", fontWeight = FontWeight.Black, fontSize = 22.sp, color = BrandDark)
+                Spacer(modifier = Modifier.height(10.dp))
 
                 val fee = order.riderFee ?: order.deliveryFee
                 val totalIncome = fee + order.surcharge
-                var buyCost = 0.0
-                order.items.forEach { buyCost += it.buy * it.qty }
+                val buyCost = order.items.sumOf { (it.buy * it.qty).toDouble() }
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(BrandBackground)
-                        .border(1.dp, BrandBorder, RoundedCornerShape(18.dp))
+                        .padding(vertical = 12.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(BrandLightSlate)
+                        .border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(14.dp),
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("YOUR INCOME", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
-                            Text("৳${totalIncome.toInt()}", fontSize = 22.sp, fontWeight = FontWeight.Black, color = BrandDark)
-                            if (order.surcharge > 0.0) {
-                                Text(
-                                    text = "(Fee:${fee.toInt()} + Sur:${order.surcharge.toInt()})",
-                                    fontSize = 8.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = BrandSecondaryText
-                                )
-                            }
+                            Text("YOUR INCOME", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                            Text("৳${totalIncome.toInt()}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandPrimary)
                         }
-                        Box(modifier = Modifier.width(1.dp).height(40.dp).background(BrandBorder))
+                        Box(modifier = Modifier.width(1.dp).height(30.dp).background(BrandBorder))
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("CASH NEEDED", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
-                            Text("৳${buyCost.toInt()}", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color(0xFFFF4757))
+                            Text("CASH NEEDED", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                            Text("৳${buyCost.toInt()}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDanger)
                         }
                     }
                 }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFFFF9EB))
-                        .border(1.dp, Color(0xFFF1C40F), RoundedCornerShape(12.dp))
-                        .padding(12.dp)
-                ) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Place, "Marker", tint = Color(0xFFFF4757), modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("DELIVERY LOCATION:", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = Color.DarkGray)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = order.address.ifEmpty { order.area },
-                            fontSize = 13.sp,
-                            color = BrandDark,
-                            fontWeight = FontWeight.Bold,
-                            lineHeight = 18.sp
-                        )
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Place, null, tint = BrandDanger, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(order.address.ifEmpty { order.area }, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark, maxLines = 1)
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-
                 Button(
                     onClick = { onAccept() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
+                    modifier = Modifier.fillMaxWidth().height(52.dp)
                 ) {
-                    Text("ACCEPT ORDER", fontWeight = FontWeight.Black, fontSize = 16.sp, letterSpacing = 0.5.sp)
+                    Text("ACCEPT DISPATCH", fontWeight = FontWeight.Black, fontSize = 14.sp, color = Color.White)
                 }
             }
         }
@@ -1942,221 +2191,82 @@ fun NewOrderPopupDialog(order: Order, onAccept: () -> Unit) {
 fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = { onDismiss() }) {
         Card(
-            colors = CardDefaults.cardColors(containerColor = BrandBackground),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
             shape = RoundedCornerShape(24.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.85f)
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.85f)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                    modifier = Modifier.fillMaxWidth().background(BrandDark).padding(horizontal = 14.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { onDismiss() }) {
-                        Icon(Icons.Default.ArrowBack, "Back", tint = BrandDark)
+                        Icon(Icons.Default.ArrowBack, null, tint = Color.White)
                     }
-                    Text(
-                        text = "Order Details",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Black,
-                        color = BrandDark
-                    )
+                    Text("Order Historical Ledger", fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color.White)
                 }
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)
                 ) {
                     val fee = order.riderFee ?: order.deliveryFee
-                    val totalIncome = fee + order.surcharge
-                    var shopPayment = 0.0
-                    order.items.forEach { shopPayment += it.buy * it.qty }
+                    val income = fee + order.surcharge
+                    val buyTotal = order.items.sumOf { (it.buy * it.qty).toDouble() }
+                    val oDiff = order.total - (buyTotal + income)
 
-                    val diff = order.total - (shopPayment + totalIncome)
+                    val fmt = remember { SimpleDateFormat("MMM dd, yyyy | hh:mm a", Locale.getDefault()) }
+                    val labelTime = fmt.format(Date(order.time)).uppercase()
 
-                    val formatter = remember { SimpleDateFormat("MMM dd, yyyy | hh:mm a", Locale.getDefault()) }
-                    val timeStr = formatter.format(Date(order.time)).uppercase()
+                    Text("ORDER ID #${getOrderIdDisplay(order)}", fontSize = 11.sp, color = BrandSecondaryText, fontWeight = FontWeight.Bold)
+                    Text("DISPATCH LOGGED: $labelTime", fontSize = 10.sp, color = BrandSecondaryText)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("৳${income.toInt()}", fontSize = 32.sp, fontWeight = FontWeight.Black, color = BrandPrimary)
+                    Text("Your final completed fee", fontSize = 11.sp, color = BrandSecondaryText)
 
-                    Text(
-                        text = "ORDER ID # ${getOrderIdDisplay(order)}\nDELIVERY EARNINGS | $timeStr",
-                        fontSize = 11.sp,
-                        color = BrandSecondaryText,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 16.sp,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Divider(color = BrandBorder)
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = "৳${totalIncome.toInt()}",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Black,
-                        color = BrandPrimary,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-                    
-                    Divider(color = BrandBorder, modifier = Modifier.padding(bottom = 12.dp))
-
-                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Base Delivery Fee", fontSize = 13.sp, color = BrandDark.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Base Delivery Fee", fontSize = 13.sp, color = BrandDark)
                         Text("৳${fee.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                     }
-
                     if (order.surcharge > 0.0) {
-                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Surcharge", fontSize = 13.sp, color = BrandDark.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Rain/Night Surcharge", fontSize = 13.sp, color = BrandDark)
                             Text("৳${order.surcharge.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                         }
                     }
 
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Divider(color = BrandBorder)
                     Spacer(modifier = Modifier.height(12.dp))
-                    Divider(color = BrandBorder, modifier = Modifier.padding(bottom = 12.dp))
 
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Your Income", fontSize = 15.sp, color = BrandDark, fontWeight = FontWeight.ExtraBold)
-                        Text("৳${totalIncome.toInt()}", fontSize = 15.sp, color = BrandDark, fontWeight = FontWeight.ExtraBold)
+                        Text("Customer Payment Due", fontSize = 13.sp, color = BrandSecondaryText)
+                        Text("৳${order.total.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
+                    }
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Merchant Payout Paid", fontSize = 13.sp, color = BrandSecondaryText)
+                        Text("৳${buyTotal.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 20.dp)
-                            .border(1.dp, BrandBorder, RoundedCornerShape(14.dp))
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("User Payment", fontSize = 13.sp, color = BrandSecondaryText, fontWeight = FontWeight.SemiBold)
-                                Text("৳${order.total.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
-                            }
-                            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Shop/Restaurant Bill", fontSize = 13.sp, color = BrandSecondaryText, fontWeight = FontWeight.SemiBold)
-                                Text("৳${shopPayment.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
-                            }
-                            if (order.handlingFee > 0.0) {
-                                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Handling Fee", fontSize = 13.sp, color = BrandSecondaryText, fontWeight = FontWeight.SemiBold)
-                                    Text("৳${order.handlingFee.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Divider(color = BrandBorder)
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            val dueText = if (diff >= 0.0) "You Pay to Company" else "Company Pays You"
-                            val dueColor = if (diff >= 0.0) BrandDark else BrandPrimary
-
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Text(dueText, fontSize = 14.sp, color = dueColor, fontWeight = FontWeight.Black)
-                                Text("৳${Math.round(Math.abs(diff))}", fontSize = 16.sp, color = dueColor, fontWeight = FontWeight.Black)
-                            }
+                    Spacer(modifier = Modifier.height(14.dp))
+                    val dLabel = if (oDiff >= 0.0) "Net Balance Owed to Company" else "Net Balance Company Pays You"
+                    val dColor = if (oDiff >= 0.0) BrandDanger else BrandPrimary
+                    Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(dColor.copy(alpha = 0.08f)).padding(10.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(dLabel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = dColor)
+                            Text("৳${Math.round(Math.abs(oDiff))}", fontSize = 12.sp, fontWeight = FontWeight.Black, color = dColor)
                         }
                     }
 
-                    Text(
-                        text = "DELIVERY ITEMS",
-                        fontSize = 11.sp,
-                        color = BrandSecondaryText,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("MERCHANT PURCHASE ITEMS", fontSize = 11.sp, color = BrandSecondaryText, fontWeight = FontWeight.Bold)
                     order.items.forEach { item ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(BrandDark)
-                            ) {
-                                  Text(
-                                      text = "${item.qty}",
-                                      color = Color.White,
-                                      fontSize = 11.sp,
-                                      fontWeight = FontWeight.Bold
-                                  )
-                            }
-                            Icon(Icons.Default.Close, "qty-icon", tint = BrandSecondaryText, modifier = Modifier.size(10.dp))
-                            Text(
-                                text = item.name,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandDark.copy(alpha = 0.9f)
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                            Text("• ${item.qty}x ${item.name}", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "ORDER ROUTE INFO",
-                        fontSize = 11.sp,
-                        color = BrandSecondaryText,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-
-                    Row {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 4.dp)) {
-                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(BrandDark))
-                            Box(modifier = Modifier.width(2.dp).height(40.dp).background(BrandBorder))
-                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFFF4757)))
-                        }
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Column {
-                            val firstStore = order.items.firstOrNull()?.source ?: "Ki-Lagbe Shop"
-                            Text(
-                                text = firstStore,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandDark
-                            )
-                            Spacer(modifier = Modifier.height(30.dp))
-                            Text(
-                                text = order.address.ifEmpty { order.area },
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BrandDark
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Divider(color = BrandBorder, modifier = Modifier.padding(vertical = 12.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(BrandBorder)
-                        ) {
-                            Icon(Icons.Default.Person, "User", tint = BrandSecondaryText, modifier = Modifier.size(16.dp))
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = order.name,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 13.sp,
-                            color = BrandDark
-                        )
                     }
                 }
             }
@@ -2166,4 +2276,225 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
 
 fun getOrderIdDisplay(order: Order): String {
     return order.oID
+}
+
+@Composable
+fun OrderTimerText(assignedAt: Long) {
+    var elapsedSeconds by remember(assignedAt) { mutableStateOf((System.currentTimeMillis() - assignedAt) / 1000) }
+
+    LaunchedEffect(assignedAt) {
+        while (true) {
+            delay(1000)
+            elapsedSeconds = (System.currentTimeMillis() - assignedAt) / 1000
+        }
+    }
+
+    val minutes = elapsedSeconds / 60
+    val seconds = elapsedSeconds % 60
+    val text = String.format(Locale.getDefault(), "%02d:%02d Mins Ago", minutes, seconds)
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.Schedule, null, tint = BrandDark, modifier = Modifier.size(16.dp))
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
+    }
+}
+
+@Composable
+fun DeliveryScooterCanvas() {
+    val infiniteTransition = rememberInfiniteTransition(label = "scooter")
+    val bobbingOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scooter_bob"
+    )
+
+    Canvas(modifier = Modifier.size(160.dp)) {
+        val h = size.height
+        val w = size.width
+
+        drawLine(
+            color = Color(0xFFE2E8F0),
+            start = androidx.compose.ui.geometry.Offset(w * 0.1f, h * 0.8f),
+            end = androidx.compose.ui.geometry.Offset(w * 0.9f, h * 0.8f),
+            strokeWidth = 3f,
+            cap = StrokeCap.Round
+        )
+
+        val centerY = h * 0.65f + bobbingOffset
+
+        // Scooter Rear Wheel
+        drawCircle(color = Color(0xFF1E293B), radius = w * 0.08f, center = androidx.compose.ui.geometry.Offset(w * 0.35f, centerY))
+        drawCircle(color = Color(0xFF94A3B8), radius = w * 0.04f, center = androidx.compose.ui.geometry.Offset(w * 0.35f, centerY))
+
+        // Scooter Front Wheel
+        drawCircle(color = Color(0xFF1E293B), radius = w * 0.08f, center = androidx.compose.ui.geometry.Offset(w * 0.72f, centerY))
+        drawCircle(color = Color(0xFF94A3B8), radius = w * 0.04f, center = androidx.compose.ui.geometry.Offset(w * 0.72f, centerY))
+
+        // Chassis
+        val framePath = Path().apply {
+            moveTo(w * 0.35f, centerY)
+            lineTo(w * 0.5f, centerY + w * 0.02f)
+            lineTo(w * 0.6f, centerY)
+            lineTo(w * 0.7f, centerY - w * 0.15f)
+            lineTo(w * 0.72f, centerY)
+        }
+        drawPath(framePath, color = Color(0xFF64748B), style = Stroke(width = 6f))
+
+        // Main Body Box
+        drawRoundRect(
+            color = Color(0xFF00C896),
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.32f, centerY - w * 0.18f),
+            size = androidx.compose.ui.geometry.Size(w * 0.28f, w * 0.12f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(15f, 15f)
+        )
+
+        // Passenger Seat
+        drawRoundRect(
+            color = Color(0xFF1E293B),
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.35f, centerY - w * 0.24f),
+            size = androidx.compose.ui.geometry.Size(w * 0.18f, w * 0.06f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(10f, 10f)
+        )
+
+        // Front Shield
+        val shieldPath = Path().apply {
+            moveTo(w * 0.62f, centerY - w * 0.08f)
+            lineTo(w * 0.70f, centerY - w * 0.38f)
+            lineTo(w * 0.74f, centerY - w * 0.38f)
+            lineTo(w * 0.68f, centerY - w * 0.08f)
+            close()
+        }
+        drawPath(shieldPath, color = Color(0xFF00C896))
+
+        // Delivery Box
+        drawRoundRect(
+            color = Color(0xFF0F172A),
+            topLeft = androidx.compose.ui.geometry.Offset(w * 0.22f, centerY - w * 0.36f),
+            size = androidx.compose.ui.geometry.Size(w * 0.14f, w * 0.20f),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(10f, 10f)
+        )
+
+        // Headlight
+        drawCircle(color = Color(0xFFFFD700), radius = w * 0.02f, center = androidx.compose.ui.geometry.Offset(w * 0.74f, centerY - w * 0.35f))
+    }
+}
+
+@Composable
+fun SimulationMapCanvas(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "map_sim")
+    val progress by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(animation = tween(5500, easing = LinearEasing), repeatMode = RepeatMode.Restart),
+        label = "map_dot"
+    )
+
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+
+        val grid = Color(0xFFE2E8F0)
+        var x = 0f
+        while (x < w) {
+            drawLine(grid, androidx.compose.ui.geometry.Offset(x, 0f), androidx.compose.ui.geometry.Offset(x, h), 1.5f)
+            x += 50.dp.toPx()
+        }
+        var y = 0f
+        while (y < h) {
+            drawLine(grid, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(w, y), 1.5f)
+            y += 50.dp.toPx()
+        }
+
+        // Draw Simulated roads/streets path
+        val route = Path().apply {
+            moveTo(w * 0.2f, h * 0.3f)
+            lineTo(w * 0.5f, h * 0.3f)
+            lineTo(w * 0.5f, h * 0.7f)
+            lineTo(w * 0.8f, h * 0.7f)
+        }
+
+        drawPath(route, color = Color(0xFF00C896).copy(alpha = 0.15f), style = Stroke(12f, cap = StrokeCap.Round))
+        drawPath(route, color = Color(0xFF00C896), style = Stroke(5f, cap = StrokeCap.Round))
+
+        // Start point (Shop)
+        drawCircle(Color.White, 12f, androidx.compose.ui.geometry.Offset(w * 0.2f, h * 0.3f))
+        drawCircle(BrandDark, 7f, androidx.compose.ui.geometry.Offset(w * 0.2f, h * 0.3f))
+
+        // Dropoff point (Customer)
+        drawCircle(Color.White, 12f, androidx.compose.ui.geometry.Offset(w * 0.8f, h * 0.7f))
+        drawCircle(BrandDanger, 7f, androidx.compose.ui.geometry.Offset(w * 0.8f, h * 0.7f))
+
+        // Animating motorcycle state marker
+        val finalX: Float
+        val finalY: Float
+        if (progress < 0.4f) {
+            val ratio = progress / 0.4f
+            finalX = w * 0.2f + (w * 0.3f) * ratio
+            finalY = h * 0.3f
+        } else if (progress < 0.75f) {
+            val ratio = (progress - 0.4f) / 0.35f
+            finalX = w * 0.5f
+            finalY = h * 0.3f + (h * 0.4f) * ratio
+        } else {
+            val ratio = (progress - 0.75f) / 0.25f
+            finalX = w * 0.5f + (w * 0.3f) * ratio
+            finalY = h * 0.7f
+        }
+
+        drawCircle(Color(0xFF00C896).copy(alpha = 0.35f), 18f, androidx.compose.ui.geometry.Offset(finalX, finalY))
+        drawCircle(Color(0xFF0F172A), 8f, androidx.compose.ui.geometry.Offset(finalX, finalY))
+    }
+}
+
+@Composable
+fun OnlineHoursChartCanvas(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+
+        drawLine(Color(0xFFE2E8F0), androidx.compose.ui.geometry.Offset(0f, h * 0.9f), androidx.compose.ui.geometry.Offset(w, h * 0.9f), 2f)
+
+        val pts = listOf(
+            androidx.compose.ui.geometry.Offset(w * 0.05f, h * 0.8f),
+            androidx.compose.ui.geometry.Offset(w * 0.2f, h * 0.55f),
+            androidx.compose.ui.geometry.Offset(w * 0.4f, h * 0.4f),
+            androidx.compose.ui.geometry.Offset(w * 0.6f, h * 0.65f),
+            androidx.compose.ui.geometry.Offset(w * 0.8f, h * 0.3f),
+            androidx.compose.ui.geometry.Offset(w * 0.95f, h * 0.7f)
+        )
+
+        val fill = Path().apply {
+            moveTo(pts.first().x, h * 0.9f)
+            pts.forEach { lineTo(it.x, it.y) }
+            lineTo(pts.last().x, h * 0.9f)
+            close()
+        }
+
+        drawPath(
+            fill,
+            brush = Brush.verticalGradient(
+                colors = listOf(Color(0xFF00C896).copy(alpha = 0.3f), Color.Transparent),
+                startY = h * 0.2f,
+                endY = h * 0.9f
+            )
+        )
+
+        val stroke = Path().apply {
+            moveTo(pts.first().x, pts.first().y)
+            for (i in 1 until pts.size) {
+                lineTo(pts[i].x, pts[i].y)
+            }
+        }
+        drawPath(stroke, color = Color(0xFF00C896), style = Stroke(6f, cap = StrokeCap.Round))
+
+        pts.forEach { pt ->
+            drawCircle(Color.White, 8f, pt)
+            drawCircle(Color(0xFF00C896), 4f, pt)
+        }
+    }
 }

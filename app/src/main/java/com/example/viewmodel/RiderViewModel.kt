@@ -35,7 +35,7 @@ sealed interface SignUpState {
 }
 
 enum class ActiveTab {
-    Home, Wallet, Profile
+    Home, Orders, Wallet, Profile
 }
 
 class RiderViewModel : ViewModel() {
