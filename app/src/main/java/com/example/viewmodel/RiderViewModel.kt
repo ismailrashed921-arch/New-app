@@ -530,23 +530,24 @@ class RiderViewModel : ViewModel() {
         try {
             vibrator?.cancel()
             vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
-            // Elegant single vibration pattern: 1 second vibrating, 0.5 second pause, then 1 second vibrating (not repeating)
+            // Strong repeating vibration pattern: 1 second vibrating, 0.5 second pause, repeating from start index (0)
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 1000, 500, 1000), -1))
+                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 1000, 500, 1000), 0))
             } else {
                 @Suppress("DEPRECATION")
-                vibrator?.vibrate(longArrayOf(0, 1000, 500, 1000), -1)
+                vibrator?.vibrate(longArrayOf(0, 1000, 500, 1000), 0)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         try {
-            val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
                 ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context, ringtoneUri)
-                isLooping = false
+                isLooping = true
                 prepare()
                 start()
             }
@@ -556,7 +557,7 @@ class RiderViewModel : ViewModel() {
                 val fallbackUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 mediaPlayer = MediaPlayer().apply {
                     setDataSource(context, fallbackUri)
-                    isLooping = false
+                    isLooping = true
                     prepare()
                     start()
                 }
