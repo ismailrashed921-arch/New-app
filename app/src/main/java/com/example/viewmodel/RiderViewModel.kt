@@ -324,6 +324,9 @@ class RiderViewModel : ViewModel() {
     }
 
     fun setOnlineStatus(online: Boolean, context: Context? = null) {
+        if (db == null && context != null) {
+            initFirebase(context)
+        }
         val firestore = db ?: return
         val phone = currentRider.value?.phone 
             ?: context?.getSharedPreferences("RiderPrefs", Context.MODE_PRIVATE)?.getString("riderPhone", null)

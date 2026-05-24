@@ -147,6 +147,14 @@ class RiderService : Service() {
                 ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(applicationContext, ringtoneUri)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    setAudioAttributes(
+                        android.media.AudioAttributes.Builder()
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                            .build()
+                    )
+                }
                 isLooping = true
                 prepare()
                 start()

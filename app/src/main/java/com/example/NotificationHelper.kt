@@ -11,7 +11,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 
 object NotificationHelper {
-    private const val CHANNEL_ID = "kilagbe_orders_channel_v4_ringtone"
+    private const val CHANNEL_ID = "kilagbe_orders_channel_v5_silent"
     private const val CHANNEL_NAME = "New Assigned Orders"
     private const val CHANNEL_DESC = "Notifications for newly assigned rider orders"
     private const val NOTIFICATION_ID = 1001
@@ -22,16 +22,9 @@ object NotificationHelper {
             val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
                 description = CHANNEL_DESC
                 enableLights(true)
-                enableVibration(true)
-                // Set channel default sound to custom high-volume ringtone
-                val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                val audioAttributes = AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                    .build()
-                setSound(soundUri, audioAttributes)
+                enableVibration(false)
+                vibrationPattern = null
+                setSound(null, null)
             }
             val notificationManager: NotificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -48,10 +41,6 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_chat)
             .setContentTitle("New Active Order Assigned! 🚴")
@@ -59,10 +48,10 @@ object NotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_CALL)
             .setContentIntent(pendingIntent)
-            .setSound(soundUri)
-            .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000, 500, 1000)) // Distinctive long vibration pattern
+            .setSound(null)
+            .setVibrate(null)
             .setAutoCancel(true)
-            .setDefaults(NotificationCompat.DEFAULT_LIGHTS) // Do not use DEFAULT_ALL or DEFAULT_SOUND as they override the Ringtone soundUri
+            .setDefaults(0)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         try {

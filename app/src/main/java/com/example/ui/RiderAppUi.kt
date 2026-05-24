@@ -46,6 +46,14 @@ import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.*
 
+// Premium Delivery Brand Colors
+private val BrandPrimary = Color(0xFF00C896)
+private val BrandDark = Color(0xFF0F172A)
+private val BrandBackground = Color(0xFFF8FAFC)
+private val BrandAccent = Color(0xFF14B8A6)
+private val BrandSecondaryText = Color(0xFF64748B)
+private val BrandBorder = Color(0xFFE2E8F0)
+
 @Composable
 fun RiderAppUi(viewModel: RiderViewModel) {
     val context = LocalContext.current
@@ -102,7 +110,7 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
     }
 
     Scaffold(
-        containerColor = Color(0xFFF4F7F6)
+        containerColor = BrandBackground
     ) { padding ->
         Column(
             modifier = Modifier
@@ -119,10 +127,10 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .size(110.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(24.dp))
                     .background(Color.White)
-                    .border(2.dp, Color(0xFFF1F2F6), RoundedCornerShape(20.dp))
-                    .padding(8.dp)
+                    .border(1.5.dp, BrandBorder, RoundedCornerShape(24.dp))
+                    .padding(12.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -136,32 +144,32 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
                     text = "Ki-Lagbe",
                     fontWeight = FontWeight.Black,
                     fontSize = 32.sp,
-                    color = Color(0xFF2D3436)
+                    color = BrandDark
                 )
                 Text(
                     text = " Rider",
                     fontWeight = FontWeight.Black,
                     fontSize = 32.sp,
-                    color = Color(0xFF00B894)
+                    color = BrandPrimary
                 )
             }
 
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.padding(28.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "Login to Panel",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color(0xFF2D3436),
-                        modifier = Modifier.padding(bottom = 20.dp)
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 20.sp,
+                        color = BrandDark,
+                        modifier = Modifier.padding(bottom = 24.dp)
                     )
 
                     OutlinedTextField(
@@ -170,10 +178,21 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
                         label = { Text("Registered Phone Number") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BrandPrimary,
+                            unfocusedBorderColor = BrandBorder,
+                            focusedLabelColor = BrandPrimary,
+                            unfocusedLabelColor = BrandSecondaryText,
+                            focusedLeadingIconColor = BrandPrimary,
+                            unfocusedLeadingIconColor = BrandSecondaryText
+                        ),
+                        leadingIcon = {
+                            Icon(Icons.Default.Phone, "Phone")
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 12.dp)
+                            .padding(bottom = 14.dp)
                     )
 
                     OutlinedTextField(
@@ -183,10 +202,21 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BrandPrimary,
+                            unfocusedBorderColor = BrandBorder,
+                            focusedLabelColor = BrandPrimary,
+                            unfocusedLabelColor = BrandSecondaryText,
+                            focusedLeadingIconColor = BrandPrimary,
+                            unfocusedLeadingIconColor = BrandSecondaryText
+                        ),
+                        leadingIcon = {
+                            Icon(Icons.Default.Lock, "PIN")
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 20.dp)
+                            .padding(bottom = 24.dp)
                     )
 
                     Button(
@@ -201,8 +231,8 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00B894))
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
                     ) {
                         if (loginState is LoginState.Loading) {
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
@@ -211,13 +241,13 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     Text(
                         text = "Apply as New Rider",
-                        color = Color(0xFF0984E3),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.sp,
+                        color = BrandPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
                         modifier = Modifier
                             .clickable { onNavigateToSignUp() }
                             .padding(8.dp)
@@ -260,7 +290,7 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
     }
 
     Scaffold(
-        containerColor = Color(0xFFF4F7F6)
+        containerColor = BrandBackground
     ) { padding ->
         Column(
             modifier = Modifier
@@ -277,9 +307,9 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .size(95.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(24.dp))
                     .background(Color.White)
-                    .border(2.dp, Color(0xFFF1F2F6), RoundedCornerShape(20.dp))
+                    .border(1.5.dp, BrandBorder, RoundedCornerShape(24.dp))
                     .padding(8.dp)
             )
 
@@ -294,13 +324,13 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                     text = "Apply",
                     fontWeight = FontWeight.Black,
                     fontSize = 32.sp,
-                    color = Color(0xFF2D3436)
+                    color = BrandDark
                 )
                 Text(
                     text = " Rider",
                     fontWeight = FontWeight.Black,
                     fontSize = 32.sp,
-                    color = Color(0xFF00B894)
+                    color = BrandPrimary
                 )
             }
 
@@ -315,7 +345,7 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -327,7 +357,18 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                         onValueChange = { name = it },
                         label = { Text("Full Name (As per NID)") },
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BrandPrimary,
+                            unfocusedBorderColor = BrandBorder,
+                            focusedLabelColor = BrandPrimary,
+                            unfocusedLabelColor = BrandSecondaryText,
+                            focusedLeadingIconColor = BrandPrimary,
+                            unfocusedLeadingIconColor = BrandSecondaryText
+                        ),
+                        leadingIcon = {
+                            Icon(Icons.Default.Person, "Name")
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 12.dp)
@@ -339,7 +380,18 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                         label = { Text("Active Phone Number") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BrandPrimary,
+                            unfocusedBorderColor = BrandBorder,
+                            focusedLabelColor = BrandPrimary,
+                            unfocusedLabelColor = BrandSecondaryText,
+                            focusedLeadingIconColor = BrandPrimary,
+                            unfocusedLeadingIconColor = BrandSecondaryText
+                        ),
+                        leadingIcon = {
+                            Icon(Icons.Default.Phone, "Phone")
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 12.dp)
@@ -352,7 +404,18 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BrandPrimary,
+                            unfocusedBorderColor = BrandBorder,
+                            focusedLabelColor = BrandPrimary,
+                            unfocusedLabelColor = BrandSecondaryText,
+                            focusedLeadingIconColor = BrandPrimary,
+                            unfocusedLeadingIconColor = BrandSecondaryText
+                        ),
+                        leadingIcon = {
+                            Icon(Icons.Default.Lock, "PIN")
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 12.dp)
@@ -366,7 +429,18 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                             readOnly = true,
                             label = { Text("Select Working Area") },
                             trailingIcon = { Icon(Icons.Default.ArrowDropDown, "Select Area") },
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = BrandPrimary,
+                                unfocusedBorderColor = BrandBorder,
+                                focusedLabelColor = BrandPrimary,
+                                unfocusedLabelColor = BrandSecondaryText,
+                                focusedLeadingIconColor = BrandPrimary,
+                                unfocusedLeadingIconColor = BrandSecondaryText
+                            ),
+                            leadingIcon = {
+                                Icon(Icons.Default.LocationOn, "Location")
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
                         Box(
@@ -397,7 +471,7 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                             text = "YOUR CLEAR SELFIE",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Gray,
+                            color = BrandSecondaryText,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                         Row(
@@ -405,16 +479,16 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.5.dp, Color(0xFFEEEEEE), RoundedCornerShape(14.dp))
+                                .border(1.5.dp, BrandBorder, RoundedCornerShape(16.dp))
                                 .clickable { photoLauncher.launch("image/*") }
                                 .padding(12.dp)
                         ) {
-                            Icon(Icons.Default.PhotoCamera, "Selfie", tint = Color(0xFF00B894))
+                            Icon(Icons.Default.PhotoCamera, "Selfie", tint = BrandPrimary)
                             Text(
                                 text = if (photoUri != null) "Selfie Selected ✅" else "Choose Image File",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (photoUri != null) Color(0xFF00B894) else Color.DarkGray
+                                color = if (photoUri != null) BrandPrimary else BrandSecondaryText
                             )
                         }
                     }
@@ -425,7 +499,7 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                             text = "NID FRONT & BACK MATCH",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Gray,
+                            color = BrandSecondaryText,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -433,7 +507,7 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .weight(1f)
-                                    .border(1.5.dp, Color(0xFFEEEEEE), RoundedCornerShape(14.dp))
+                                    .border(1.5.dp, BrandBorder, RoundedCornerShape(16.dp))
                                     .clickable { nidFrontLauncher.launch("image/*") }
                                     .padding(12.dp)
                             ) {
@@ -441,14 +515,14 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                                     text = if (nidFrontUri != null) "Front ✅" else "NID Front",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (nidFrontUri != null) Color(0xFF00B894) else Color.DarkGray
+                                    color = if (nidFrontUri != null) BrandPrimary else BrandSecondaryText
                                 )
                             }
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .weight(1f)
-                                    .border(1.5.dp, Color(0xFFEEEEEE), RoundedCornerShape(14.dp))
+                                    .border(1.5.dp, BrandBorder, RoundedCornerShape(16.dp))
                                     .clickable { nidBackLauncher.launch("image/*") }
                                     .padding(12.dp)
                             ) {
@@ -456,7 +530,7 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                                     text = if (nidBackUri != null) "Back ✅" else "NID Back",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (nidBackUri != null) Color(0xFF00B894) else Color.DarkGray
+                                    color = if (nidBackUri != null) BrandPrimary else BrandSecondaryText
                                 )
                             }
                         }
@@ -480,8 +554,8 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00B894))
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
                     ) {
                         if (signUpState is SignUpState.Progress) {
                             Row(
@@ -506,8 +580,8 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
 
                     Text(
                         text = "Already Applied? Login",
-                        color = Color(0xFF0984E3),
-                        fontWeight = FontWeight.SemiBold,
+                        color = BrandPrimary,
+                        fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         modifier = Modifier
                             .clickable { onNavigateToLogin() }
@@ -523,7 +597,7 @@ fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
 fun PendingScreen(viewModel: RiderViewModel) {
     val context = LocalContext.current
     Scaffold(
-        containerColor = Color(0xFFF4F7F6)
+        containerColor = BrandBackground
     ) { padding ->
         Column(
             modifier = Modifier
@@ -544,22 +618,22 @@ fun PendingScreen(viewModel: RiderViewModel) {
                 text = "Application Pending",
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 24.sp,
-                color = Color(0xFF2D3436)
+                color = BrandDark
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "Your account has been submitted successfully and is awaiting admin approval. We will notify you once verified.",
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp,
-                color = Color.Gray,
+                color = BrandSecondaryText,
                 lineHeight = 22.sp
             )
             Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = { viewModel.logout(context) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4757)),
-                shape = RoundedCornerShape(14.dp),
-                modifier = Modifier.width(180.dp).height(50.dp)
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.width(200.dp).height(50.dp)
             ) {
                 Icon(Icons.Default.Logout, "Logout", tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
@@ -572,7 +646,7 @@ fun PendingScreen(viewModel: RiderViewModel) {
 @Composable
 fun WelcomeScreen(viewModel: RiderViewModel) {
     Scaffold(
-        containerColor = Color(0xFFF4F7F6)
+        containerColor = BrandBackground
     ) { padding ->
         Column(
             modifier = Modifier
@@ -585,7 +659,7 @@ fun WelcomeScreen(viewModel: RiderViewModel) {
             Icon(
                 imageVector = Icons.Default.TwoWheeler,
                 contentDescription = "Get Started",
-                tint = Color(0xFF00B894),
+                tint = BrandPrimary,
                 modifier = Modifier.size(80.dp)
             )
             Spacer(modifier = Modifier.height(24.dp))
@@ -593,14 +667,14 @@ fun WelcomeScreen(viewModel: RiderViewModel) {
                 text = "Welcome Back!",
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 24.sp,
-                color = Color(0xFF2D3436)
+                color = BrandDark
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "Tap the button below to go online and start receiving active orders in your area.",
                 textAlign = TextAlign.Center,
                 fontSize = 14.sp,
-                color = Color.Gray,
+                color = BrandSecondaryText,
                 lineHeight = 22.sp
             )
             Spacer(modifier = Modifier.height(40.dp))
@@ -613,7 +687,7 @@ fun WelcomeScreen(viewModel: RiderViewModel) {
                     .fillMaxWidth()
                     .height(58.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00B894))
+                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
             ) {
                 Icon(Icons.Default.PowerSettingsNew, "Go Online", tint = Color.White)
                 Spacer(modifier = Modifier.width(10.dp))
@@ -628,7 +702,7 @@ fun MainAppScreen(viewModel: RiderViewModel) {
     val activeTab by viewModel.activeTab.collectAsState()
 
     Scaffold(
-        containerColor = Color(0xFFF4F7F6),
+        containerColor = BrandBackground,
         bottomBar = {
             NavigationBar(
                 containerColor = Color.White,
@@ -641,11 +715,11 @@ fun MainAppScreen(viewModel: RiderViewModel) {
                     icon = { Icon(Icons.Default.Home, "Home") },
                     label = { Text("Home") },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF00B894),
-                        selectedTextColor = Color(0xFF00B894),
-                        indicatorColor = Color(0x1100B894),
-                        unselectedIconColor = Color.LightGray,
-                        unselectedTextColor = Color.LightGray
+                        selectedIconColor = BrandPrimary,
+                        selectedTextColor = BrandPrimary,
+                        indicatorColor = Color(0x1500C896),
+                        unselectedIconColor = BrandSecondaryText,
+                        unselectedTextColor = BrandSecondaryText
                     )
                 )
                 NavigationBarItem(
@@ -654,11 +728,11 @@ fun MainAppScreen(viewModel: RiderViewModel) {
                     icon = { Icon(Icons.Default.AccountBalanceWallet, "Wallet") },
                     label = { Text("Wallet") },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF00B894),
-                        selectedTextColor = Color(0xFF00B894),
-                        indicatorColor = Color(0x1100B894),
-                        unselectedIconColor = Color.LightGray,
-                        unselectedTextColor = Color.LightGray
+                        selectedIconColor = BrandPrimary,
+                        selectedTextColor = BrandPrimary,
+                        indicatorColor = Color(0x1500C896),
+                        unselectedIconColor = BrandSecondaryText,
+                        unselectedTextColor = BrandSecondaryText
                     )
                 )
                 NavigationBarItem(
@@ -667,11 +741,11 @@ fun MainAppScreen(viewModel: RiderViewModel) {
                     icon = { Icon(Icons.Default.AccountCircle, "Profile") },
                     label = { Text("Profile") },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color(0xFF00B894),
-                        selectedTextColor = Color(0xFF00B894),
-                        indicatorColor = Color(0x1100B894),
-                        unselectedIconColor = Color.LightGray,
-                        unselectedTextColor = Color.LightGray
+                        selectedIconColor = BrandPrimary,
+                        selectedTextColor = BrandPrimary,
+                        indicatorColor = Color(0x1500C896),
+                        unselectedIconColor = BrandSecondaryText,
+                        unselectedTextColor = BrandSecondaryText
                     )
                 )
             }
@@ -717,20 +791,20 @@ fun HomeTab(viewModel: RiderViewModel) {
                         text = "Ki-Lagbe",
                         fontWeight = FontWeight.Black,
                         fontSize = 22.sp,
-                        color = Color(0xFF2D3436)
+                        color = BrandDark
                     )
                     Text(
                         text = " Rider",
                         fontWeight = FontWeight.Black,
                         fontSize = 22.sp,
-                        color = Color(0xFF00B894)
+                        color = BrandPrimary
                     )
                 }
 
                 Button(
                     onClick = { viewModel.setOnlineStatus(!isOnline, context) },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isOnline) Color(0xFF00B894) else Color(0xFFFF4757)
+                        containerColor = if (isOnline) BrandPrimary else Color(0xFFFF4757)
                     ),
                     shape = RoundedCornerShape(20.dp),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
@@ -762,7 +836,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                     Icon(
                         imageVector = Icons.Default.FreeBreakfast,
                         contentDescription = "No Tasks",
-                        tint = Color(0xFFDDDDDD),
+                        tint = BrandBorder,
                         modifier = Modifier.size(70.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -770,19 +844,19 @@ fun HomeTab(viewModel: RiderViewModel) {
                         text = "No Active Tasks",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        color = Color(0xFFAAAAAA)
+                        color = BrandDark.copy(alpha = 0.5f)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Stay online to receive new orders.",
                         fontSize = 13.sp,
-                        color = Color(0xFFBBBBBB)
+                        color = BrandSecondaryText
                     )
                 }
             }
         } else {
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -793,20 +867,20 @@ fun HomeTab(viewModel: RiderViewModel) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(if (isSelected) Color(0xFFF1C40F) else Color(0xFFF4F7F6))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (isSelected) BrandPrimary else Color.White)
                             .border(
                                 width = 1.dp,
-                                color = if (isSelected) Color(0xFFF1C40F) else Color(0xFFDDDDDD),
-                                shape = RoundedCornerShape(20.dp)
+                                color = if (isSelected) BrandPrimary else BrandBorder,
+                                shape = RoundedCornerShape(16.dp)
                             )
                             .clickable { viewModel.currentActiveOrderId.value = order.id }
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocalShipping,
                             contentDescription = "Order",
-                            tint = if (isSelected) Color(0xFF2D3436) else Color.Gray,
+                            tint = if (isSelected) Color.White else BrandSecondaryText,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -814,7 +888,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                             text = "#${getOrderIdDisplay(order)}",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = if (isSelected) Color(0xFF2D3436) else Color.Gray
+                            color = if (isSelected) Color.White else BrandDark
                         )
                     }
                 }
@@ -834,7 +908,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color(0xFFF1C40F))
+                                .background(BrandPrimary.copy(alpha = 0.12f))
                                 .padding(horizontal = 20.dp, vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -843,7 +917,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                                 text = "ORDER ID: #${getOrderIdDisplay(order)}",
                                 fontWeight = FontWeight.Black,
                                 fontSize = 15.sp,
-                                color = Color(0xFF2D3436),
+                                color = BrandPrimary,
                                 letterSpacing = 0.5.sp
                             )
                             OrderTimerText(assignedAt = if (order.riderAssignedAt != 0L) order.riderAssignedAt else order.time)
@@ -869,13 +943,13 @@ fun HomeTab(viewModel: RiderViewModel) {
                                                 text = order.name,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 fontSize = 18.sp,
-                                                color = Color(0xFF2D3436)
+                                                color = BrandDark
                                             )
                                             Text(
                                                 text = order.phone,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 14.sp,
-                                                color = Color(0xFF0984E3),
+                                                color = BrandPrimary,
                                                 modifier = Modifier.padding(top = 2.dp)
                                             )
                                         }
@@ -888,7 +962,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                                             modifier = Modifier
                                                 .size(46.dp)
                                                 .clip(CircleShape)
-                                                .background(Color(0xFF2D3436))
+                                                .background(BrandDark)
                                         ) {
                                             Icon(Icons.Default.Call, "Dial", tint = Color.White, modifier = Modifier.size(20.dp))
                                         }
@@ -912,7 +986,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                                                 text = order.address.ifEmpty { order.area },
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 13.sp,
-                                                color = Color(0xFF555555),
+                                                color = BrandSecondaryText,
                                                 lineHeight = 18.sp
                                             )
                                             
@@ -949,7 +1023,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                                 text = "PICKUP ITEMS & SOURCE",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp,
-                                color = Color.Gray,
+                                color = BrandSecondaryText,
                                 modifier = Modifier.padding(start = 4.dp, bottom = 10.dp)
                             )
 
@@ -971,7 +1045,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                                             modifier = Modifier
                                                 .size(28.dp)
                                                 .clip(RoundedCornerShape(8.dp))
-                                                .background(Color(0xFF2D3436))
+                                                .background(BrandDark)
                                         ) {
                                             Text(
                                                 text = "${item.qty}",
@@ -990,7 +1064,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                                             modifier = Modifier
                                                 .size(50.dp)
                                                 .clip(RoundedCornerShape(10.dp))
-                                                .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(10.dp))
+                                                .border(1.dp, BrandBorder, RoundedCornerShape(10.dp))
                                         )
 
                                         Spacer(modifier = Modifier.width(12.dp))
@@ -1000,14 +1074,14 @@ fun HomeTab(viewModel: RiderViewModel) {
                                                 text = item.name,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 fontSize = 13.sp,
-                                                color = Color(0xFF2D3436)
+                                                color = BrandDark
                                             )
                                             if (item.variant.isNotEmpty()) {
                                                 Text(
                                                     text = "Option: ${item.variant}",
                                                     fontSize = 11.sp,
                                                     fontWeight = FontWeight.SemiBold,
-                                                    color = Color.Gray,
+                                                    color = BrandSecondaryText,
                                                     modifier = Modifier.padding(top = 1.dp)
                                                 )
                                             }
@@ -1015,11 +1089,11 @@ fun HomeTab(viewModel: RiderViewModel) {
                                                 text = "🏪 Shop: ${item.source}",
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.SemiBold,
-                                                color = Color.DarkGray,
+                                                color = BrandDark.copy(alpha = 0.8f),
                                                 modifier = Modifier
                                                     .padding(top = 4.dp)
                                                     .clip(RoundedCornerShape(4.dp))
-                                                    .background(Color(0xFFF8F9FA))
+                                                    .background(BrandBackground)
                                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                                             )
                                             Text(
@@ -1040,7 +1114,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                                 text = "PAYMENT INFO",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp,
-                                color = Color.Gray,
+                                color = BrandSecondaryText,
                                 modifier = Modifier.padding(start = 4.dp, bottom = 10.dp)
                             )
 
@@ -1048,7 +1122,7 @@ fun HomeTab(viewModel: RiderViewModel) {
                                 colors = CardDefaults.cardColors(containerColor = Color.White),
                                 shape = RoundedCornerShape(20.dp),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                                modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(20.dp))
+                                modifier = Modifier.fillMaxWidth().border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     val riderFee = order.riderFee ?: order.deliveryFee
@@ -1058,33 +1132,33 @@ fun HomeTab(viewModel: RiderViewModel) {
                                     val subtotal = if (order.subtotal > 0.0) order.subtotal else (order.total - riderFee - surcharge - handlingFee)
 
                                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Items Sub-total", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.Gray)
-                                        Text("৳${subtotal.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
+                                        Text("Items Sub-total", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BrandSecondaryText)
+                                        Text("৳${subtotal.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
                                     }
                                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("Delivery Fee", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.Gray)
-                                        Text("৳${riderFee.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
+                                        Text("Delivery Fee", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BrandSecondaryText)
+                                        Text("৳${riderFee.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
                                     }
                                     if (handlingFee > 0.0) {
                                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                            Text("Handling Fee", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color.Gray)
-                                            Text("৳${handlingFee.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray)
+                                            Text("Handling Fee", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BrandSecondaryText)
+                                            Text("৳${handlingFee.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark)
                                         }
                                     }
                                     if (surcharge > 0.0) {
                                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                            Text("Surcharge (Rain/Night)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF00B894))
-                                            Text("৳${surcharge.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF00B894))
+                                            Text("Surcharge (Rain/Night)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = BrandPrimary)
+                                            Text("৳${surcharge.toInt()}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandPrimary)
                                         }
                                     }
 
                                     Spacer(modifier = Modifier.height(12.dp))
-                                    Divider(color = Color(0xFFAAAAAA))
+                                    Divider(color = BrandBorder)
                                     Spacer(modifier = Modifier.height(12.dp))
 
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                        Text("COLLECT FROM USER", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = Color.Gray)
-                                        Text("৳${totalPaymentExpected.toInt()}", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color(0xFF2D3436))
+                                        Text("COLLECT FROM USER", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = BrandSecondaryText)
+                                        Text("৳${totalPaymentExpected.toInt()}", fontSize = 28.sp, fontWeight = FontWeight.Black, color = BrandDark)
                                     }
                                 }
                             }
@@ -1114,9 +1188,9 @@ fun HomeTab(viewModel: RiderViewModel) {
                                     shape = RoundedCornerShape(16.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = when (order.status) {
-                                            "Assigned", "Accepted", "Pending" -> Color(0xFF0984E3)
+                                            "Assigned", "Accepted", "Pending" -> BrandPrimary
                                             "Processing" -> Color(0xFFF39C12)
-                                            "On the Way" -> Color(0xFF00B894)
+                                            "On the Way" -> BrandAccent
                                             else -> Color.DarkGray
                                         }
                                     )
@@ -1200,13 +1274,13 @@ fun OrderTimerText(assignedAt: Long) {
     val formattedTime = String.format(Locale.getDefault(), "%02d:%02d Mins Ago", minutes, seconds)
     
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Schedule, "Time elapsed", tint = Color(0xFF2D3436), modifier = Modifier.size(16.dp))
+        Icon(Icons.Default.Schedule, "Time elapsed", tint = BrandDark, modifier = Modifier.size(16.dp))
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = formattedTime,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF2D3436)
+            color = BrandDark
         )
     }
 }
@@ -1227,15 +1301,16 @@ fun WalletTab(viewModel: RiderViewModel) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF00B894))
-                .padding(20.dp),
+                .background(BrandPrimary)
+                .padding(vertical = 18.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "My Performance",
                 color = Color.White,
-                fontWeight = FontWeight.Black,
-                fontSize = 18.sp
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 20.sp,
+                letterSpacing = 0.5.sp
             )
         }
 
@@ -1252,8 +1327,8 @@ fun WalletTab(viewModel: RiderViewModel) {
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .background(if (isSel) Color(0xFF2D3436) else Color.White)
-                        .border(1.dp, if (isSel) Color(0xFF2D3436) else Color(0xFFDDDDDD), RoundedCornerShape(20.dp))
+                        .background(if (isSel) BrandDark else Color.White)
+                        .border(1.dp, if (isSel) BrandDark else BrandBorder, RoundedCornerShape(20.dp))
                         .clickable { viewModel.setFilter(tag) }
                         .padding(horizontal = 16.dp, vertical = 6.dp)
                 ) {
@@ -1261,7 +1336,7 @@ fun WalletTab(viewModel: RiderViewModel) {
                         text = label,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isSel) Color.White else Color.DarkGray
+                        color = if (isSel) Color.White else BrandSecondaryText
                     )
                 }
             }
@@ -1273,27 +1348,27 @@ fun WalletTab(viewModel: RiderViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(20.dp))
+                .border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("TOTAL EARNING", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                        Text("৳${earnings.toInt()}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color(0xFF2D3436))
+                        Text("TOTAL EARNING", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                        Text("৳${earnings.toInt()}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDark)
                     }
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("CASH COLLECTED", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                        Text("৳${collected.toInt()}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color(0xFF2D3436))
+                        Text("CASH COLLECTED", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                        Text("৳${collected.toInt()}", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDark)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("COMPLETED DELIVERIES", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                        Text("$countDel", fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color(0xFF2D3436))
+                        Text("COMPLETED DELIVERIES", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                        Text("$countDel", fontSize = 18.sp, fontWeight = FontWeight.Black, color = BrandDark)
                     }
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("CANCELLED ORDERS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                        Text("CANCELLED ORDERS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
                         Text("$countCan", fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color(0xFFFF4757))
                     }
                 }
@@ -1307,7 +1382,7 @@ fun WalletTab(viewModel: RiderViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .border(1.dp, Color(0xFFDDDDDD), RoundedCornerShape(16.dp))
+                .border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
@@ -1329,18 +1404,18 @@ fun WalletTab(viewModel: RiderViewModel) {
                             text = dueText,
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 14.sp,
-                            color = Color(0xFF2D3436)
+                            color = BrandDark
                         )
                         Text(
                             text = dueSub,
                             fontSize = 10.sp,
-                            color = Color.Gray,
+                            color = BrandSecondaryText,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
 
-                val flowColor = if (dueAmount > 0.0) Color(0xFFFF4757) else if (dueAmount < 0.0) Color(0xFF00B894) else Color(0xFF2D3436)
+                val flowColor = if (dueAmount > 0.0) Color(0xFFFF4757) else if (dueAmount < 0.0) BrandPrimary else BrandDark
                 Text(
                     text = "৳${Math.round(Math.abs(dueAmount))}",
                     fontWeight = FontWeight.Black,
@@ -1355,7 +1430,7 @@ fun WalletTab(viewModel: RiderViewModel) {
             text = "DUE TRANSACTIONS",
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp,
-            color = Color.Gray,
+            color = BrandSecondaryText,
             modifier = Modifier.padding(start = 20.dp, bottom = 8.dp)
         )
 
@@ -1369,7 +1444,7 @@ fun WalletTab(viewModel: RiderViewModel) {
                 Text(
                     text = "No records for this period.",
                     fontSize = 13.sp,
-                    color = Color.Gray,
+                    color = BrandSecondaryText,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -1425,7 +1500,7 @@ fun WalletTab(viewModel: RiderViewModel) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { activeLedgerDetails = o }
-                            .border(1.dp, Color(0xFFF1F1F1), RoundedCornerShape(14.dp))
+                            .border(1.dp, BrandBorder, RoundedCornerShape(14.dp))
                     ) {
                         Row(
                             modifier = Modifier.padding(14.dp),
@@ -1438,12 +1513,12 @@ fun WalletTab(viewModel: RiderViewModel) {
                                     modifier = Modifier
                                         .size(36.dp)
                                         .clip(CircleShape)
-                                        .background(if (o.status == "Delivered") Color(0xFFF1F2F6) else Color(0xFFFFEAA7))
+                                        .background(if (o.status == "Delivered") BrandBackground else Color(0xFFFFEAA7))
                                 ) {
                                     Icon(
                                         imageVector = if (o.status == "Delivered") Icons.Default.TwoWheeler else Icons.Default.Close,
                                         contentDescription = o.status,
-                                        tint = if (o.status == "Delivered") Color.DarkGray else Color(0xFFD35400),
+                                        tint = if (o.status == "Delivered") BrandSecondaryText else Color(0xFFD35400),
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
@@ -1454,13 +1529,13 @@ fun WalletTab(viewModel: RiderViewModel) {
                                     Text(
                                         text = "Delivery #${getOrderIdDisplay(o)}",
                                         fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF2D3436)
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = BrandDark
                                     )
                                     Text(
                                         text = if (o.status == "Delivered") timeStr else "$timeStr (Cancelled)",
                                         fontSize = 10.sp,
-                                        color = Color.Gray,
+                                        color = BrandSecondaryText,
                                         fontWeight = FontWeight.SemiBold,
                                         modifier = Modifier.padding(bottom = 2.dp)
                                     )
@@ -1469,7 +1544,7 @@ fun WalletTab(viewModel: RiderViewModel) {
                                             text = "Cust. Bill: ৳${o.total.toInt()} | Shop Pay: ৳${shopBill.toInt()} | Your Fee: ৳${totalIncome.toInt()}",
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF0984E3)
+                                            color = BrandPrimary
                                         )
                                     }
                                 }
@@ -1479,7 +1554,7 @@ fun WalletTab(viewModel: RiderViewModel) {
                                 if (o.status == "Delivered") {
                                     val chg = o.dueChangeCustom
                                     val chgText = if (chg > 0.0) "+ ৳${chg.toInt()}" else if (chg < 0.0) "- ৳${Math.abs(chg).toInt()}" else "৳0"
-                                    val chgColor = if (chg > 0.0) Color(0xFFFF4757) else if (chg < 0.0) Color(0xFF00B894) else Color(0xFF2D3436)
+                                    val chgColor = if (chg > 0.0) Color(0xFFFF4757) else if (chg < 0.0) BrandPrimary else BrandDark
 
                                     Text(
                                         text = chgText,
@@ -1491,7 +1566,7 @@ fun WalletTab(viewModel: RiderViewModel) {
                                         text = if (o.isSettledCustom) "Settled" else "Balance: ৳${o.runningBal.toInt()}",
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = if (o.isSettledCustom) Color(0xFF00B894) else Color.Gray,
+                                        color = if (o.isSettledCustom) BrandPrimary else BrandSecondaryText,
                                         modifier = Modifier.padding(top = 2.dp)
                                     )
                                 } else {
@@ -1499,13 +1574,13 @@ fun WalletTab(viewModel: RiderViewModel) {
                                         text = "৳0",
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Black,
-                                        color = Color.DarkGray
+                                        color = BrandSecondaryText
                                     )
                                     Text(
                                         text = if (o.isSettledCustom) "Settled" else "Balance: ৳${o.runningBal.toInt()}",
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = if (o.isSettledCustom) Color(0xFF00B894) else Color.Gray,
+                                        color = if (o.isSettledCustom) BrandPrimary else BrandSecondaryText,
                                         modifier = Modifier.padding(top = 2.dp)
                                     )
                                 }
@@ -1551,14 +1626,16 @@ fun ProfileTab(viewModel: RiderViewModel) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp),
+                    .background(BrandPrimary)
+                    .padding(vertical = 18.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "My Profile",
-                    fontWeight = FontWeight.Black,
+                    color = Color.White,
+                    fontWeight = FontWeight.ExtraBold,
                     fontSize = 20.sp,
-                    color = Color(0xFF2D3436)
+                    letterSpacing = 0.5.sp
                 )
             }
         }
@@ -1575,7 +1652,7 @@ fun ProfileTab(viewModel: RiderViewModel) {
                     modifier = Modifier
                         .size(110.dp)
                         .clip(CircleShape)
-                        .border(3.dp, Color(0xFF00B894), CircleShape)
+                        .border(3.dp, BrandPrimary, CircleShape)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -1584,23 +1661,23 @@ fun ProfileTab(viewModel: RiderViewModel) {
                     text = rider?.name ?: "Rider Name",
                     fontWeight = FontWeight.Black,
                     fontSize = 22.sp,
-                    color = Color(0xFF2D3436)
+                    color = BrandDark
                 )
 
                 Text(
                     text = rider?.phone ?: "",
                     fontSize = 14.sp,
-                    color = Color.Gray,
+                    color = BrandSecondaryText,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 2.dp)
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFF00B894))
+                        .background(BrandPrimary)
                         .padding(horizontal = 14.dp, vertical = 4.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1624,36 +1701,37 @@ fun ProfileTab(viewModel: RiderViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         text = "ACCOUNT STATUS",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Gray
+                        color = BrandSecondaryText
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CheckCircle, "Active", tint = Color(0xFF00B894), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.CheckCircle, "Active", tint = BrandPrimary, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Approved & Active", fontWeight = FontWeight.ExtraBold, color = Color(0xFF00B894), fontSize = 14.sp)
+                        Text("Approved & Active", fontWeight = FontWeight.ExtraBold, color = BrandPrimary, fontSize = 14.sp)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    Divider(color = Color(0xFFF1F1F1))
+                    Divider(color = BrandBorder)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
                         text = "IDENTITY VERIFICATION",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Gray
+                        color = BrandSecondaryText
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.AssignmentInd, "NID", tint = Color(0xFF0984E3), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.AssignmentInd, "NID", tint = BrandPrimary, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("NID Verified by Admin", fontWeight = FontWeight.ExtraBold, color = Color(0xFF555555), fontSize = 14.sp)
+                        Text("NID Verified by Admin", fontWeight = FontWeight.ExtraBold, color = BrandDark.copy(alpha = 0.8f), fontSize = 14.sp)
                     }
                 }
             }
@@ -1667,19 +1745,20 @@ fun ProfileTab(viewModel: RiderViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .border(1.dp, BrandBorder, RoundedCornerShape(20.dp))
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         text = "SECURITY",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Gray,
+                        color = BrandSecondaryText,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                     Text(
                         text = "Change 6-Digit PIN",
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF2D3436),
+                        color = BrandDark,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -1716,7 +1795,7 @@ fun ProfileTab(viewModel: RiderViewModel) {
                         onClick = {
                             viewModel.changePin(oldPin, newPin)
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00B894)),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(46.dp),
@@ -1765,7 +1844,7 @@ fun NewOrderPopupDialog(order: Order, onAccept: () -> Unit) {
                 Icon(
                     imageVector = Icons.Default.TwoWheeler,
                     contentDescription = "New Order Alert",
-                    tint = Color(0xFF00B894),
+                    tint = BrandPrimary,
                     modifier = Modifier.size(60.dp)
                 )
 
@@ -1773,7 +1852,7 @@ fun NewOrderPopupDialog(order: Order, onAccept: () -> Unit) {
                     text = "New Order!",
                     fontWeight = FontWeight.Black,
                     fontSize = 24.sp,
-                    color = Color(0xFF2D3436),
+                    color = BrandDark,
                     modifier = Modifier.padding(top = 8.dp)
                 )
 
@@ -1787,8 +1866,8 @@ fun NewOrderPopupDialog(order: Order, onAccept: () -> Unit) {
                         .fillMaxWidth()
                         .padding(vertical = 16.dp)
                         .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFFF4F7F6))
-                        .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(18.dp))
+                        .background(BrandBackground)
+                        .border(1.dp, BrandBorder, RoundedCornerShape(18.dp))
                 ) {
                     Row(
                         modifier = Modifier
@@ -1798,20 +1877,20 @@ fun NewOrderPopupDialog(order: Order, onAccept: () -> Unit) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("YOUR INCOME", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                            Text("৳${totalIncome.toInt()}", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color(0xFF2D3436))
+                            Text("YOUR INCOME", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                            Text("৳${totalIncome.toInt()}", fontSize = 22.sp, fontWeight = FontWeight.Black, color = BrandDark)
                             if (order.surcharge > 0.0) {
                                 Text(
                                     text = "(Fee:${fee.toInt()} + Sur:${order.surcharge.toInt()})",
                                     fontSize = 8.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.LightGray
+                                    color = BrandSecondaryText
                                 )
                             }
                         }
-                        Box(modifier = Modifier.width(1.dp).height(40.dp).background(Color(0xFFDDDDDD)))
+                        Box(modifier = Modifier.width(1.dp).height(40.dp).background(BrandBorder))
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("CASH NEEDED", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                            Text("CASH NEEDED", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
                             Text("৳${buyCost.toInt()}", fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color(0xFFFF4757))
                         }
                     }
@@ -1835,7 +1914,7 @@ fun NewOrderPopupDialog(order: Order, onAccept: () -> Unit) {
                         Text(
                             text = order.address.ifEmpty { order.area },
                             fontSize = 13.sp,
-                            color = Color(0xFF2D3436),
+                            color = BrandDark,
                             fontWeight = FontWeight.Bold,
                             lineHeight = 18.sp
                         )
@@ -1850,7 +1929,7 @@ fun NewOrderPopupDialog(order: Order, onAccept: () -> Unit) {
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00B894))
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
                 ) {
                     Text("ACCEPT ORDER", fontWeight = FontWeight.Black, fontSize = 16.sp, letterSpacing = 0.5.sp)
                 }
@@ -1863,7 +1942,7 @@ fun NewOrderPopupDialog(order: Order, onAccept: () -> Unit) {
 fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = { onDismiss() }) {
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
+            colors = CardDefaults.cardColors(containerColor = BrandBackground),
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier
                 .fillMaxWidth()
@@ -1878,13 +1957,13 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { onDismiss() }) {
-                        Icon(Icons.Default.ArrowBack, "Back", tint = Color.DarkGray)
+                        Icon(Icons.Default.ArrowBack, "Back", tint = BrandDark)
                     }
                     Text(
                         text = "Order Details",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Black,
-                        color = Color(0xFF2D3436)
+                        color = BrandDark
                     )
                 }
 
@@ -1907,7 +1986,7 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
                     Text(
                         text = "ORDER ID # ${getOrderIdDisplay(order)}\nDELIVERY EARNINGS | $timeStr",
                         fontSize = 11.sp,
-                        color = Color.Gray,
+                        color = BrandSecondaryText,
                         fontWeight = FontWeight.Bold,
                         lineHeight = 16.sp,
                         modifier = Modifier.padding(bottom = 6.dp)
@@ -1917,30 +1996,30 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
                         text = "৳${totalIncome.toInt()}",
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Black,
-                        color = Color(0xFF00B894),
+                        color = BrandPrimary,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
                     
-                    Divider(color = Color(0xFFEEEEEE), modifier = Modifier.padding(bottom = 12.dp))
+                    Divider(color = BrandBorder, modifier = Modifier.padding(bottom = 12.dp))
 
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Base Delivery Fee", fontSize = 13.sp, color = Color.DarkGray, fontWeight = FontWeight.Medium)
-                        Text("৳${fee.toInt()}", fontSize = 13.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold)
+                        Text("Base Delivery Fee", fontSize = 13.sp, color = BrandDark.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
+                        Text("৳${fee.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                     }
 
                     if (order.surcharge > 0.0) {
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Surcharge", fontSize = 13.sp, color = Color.DarkGray, fontWeight = FontWeight.Medium)
-                            Text("৳${order.surcharge.toInt()}", fontSize = 13.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold)
+                            Text("Surcharge", fontSize = 13.sp, color = BrandDark.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
+                            Text("৳${order.surcharge.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
-                    Divider(color = Color(0xFFDDDDDD), modifier = Modifier.padding(bottom = 12.dp))
+                    Divider(color = BrandBorder, modifier = Modifier.padding(bottom = 12.dp))
 
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Your Income", fontSize = 15.sp, color = Color(0xFF2D3436), fontWeight = FontWeight.ExtraBold)
-                        Text("৳${totalIncome.toInt()}", fontSize = 15.sp, color = Color(0xFF2D3436), fontWeight = FontWeight.ExtraBold)
+                        Text("Your Income", fontSize = 15.sp, color = BrandDark, fontWeight = FontWeight.ExtraBold)
+                        Text("৳${totalIncome.toInt()}", fontSize = 15.sp, color = BrandDark, fontWeight = FontWeight.ExtraBold)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -1951,30 +2030,30 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 20.dp)
-                            .border(1.dp, Color(0xFFEEEEEE), RoundedCornerShape(14.dp))
+                            .border(1.dp, BrandBorder, RoundedCornerShape(14.dp))
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("User Payment", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.SemiBold)
-                                Text("৳${order.total.toInt()}", fontSize = 13.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold)
+                                Text("User Payment", fontSize = 13.sp, color = BrandSecondaryText, fontWeight = FontWeight.SemiBold)
+                                Text("৳${order.total.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                             }
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Shop/Restaurant Bill", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.SemiBold)
-                                Text("৳${shopPayment.toInt()}", fontSize = 13.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold)
+                                Text("Shop/Restaurant Bill", fontSize = 13.sp, color = BrandSecondaryText, fontWeight = FontWeight.SemiBold)
+                                Text("৳${shopPayment.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                             }
                             if (order.handlingFee > 0.0) {
                                 Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("Handling Fee", fontSize = 13.sp, color = Color.Gray, fontWeight = FontWeight.SemiBold)
-                                    Text("৳${order.handlingFee.toInt()}", fontSize = 13.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold)
+                                    Text("Handling Fee", fontSize = 13.sp, color = BrandSecondaryText, fontWeight = FontWeight.SemiBold)
+                                    Text("৳${order.handlingFee.toInt()}", fontSize = 13.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                                 }
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
-                            Divider(color = Color(0xFFF1F1F1))
+                            Divider(color = BrandBorder)
                             Spacer(modifier = Modifier.height(8.dp))
 
                             val dueText = if (diff >= 0.0) "You Pay to Company" else "Company Pays You"
-                            val dueColor = if (diff >= 0.0) Color(0xFF2D3436) else Color(0xFF00B894)
+                            val dueColor = if (diff >= 0.0) BrandDark else BrandPrimary
 
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text(dueText, fontSize = 14.sp, color = dueColor, fontWeight = FontWeight.Black)
@@ -1986,7 +2065,7 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
                     Text(
                         text = "DELIVERY ITEMS",
                         fontSize = 11.sp,
-                        color = Color.Gray,
+                        color = BrandSecondaryText,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
@@ -2002,21 +2081,21 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0xFF2D3436))
+                                    .background(BrandDark)
                             ) {
-                                Text(
-                                    text = "${item.qty}",
-                                    color = Color.White,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                  Text(
+                                      text = "${item.qty}",
+                                      color = Color.White,
+                                      fontSize = 11.sp,
+                                      fontWeight = FontWeight.Bold
+                                  )
                             }
-                            Icon(Icons.Default.Close, "qty-icon", tint = Color.LightGray, modifier = Modifier.size(10.dp))
+                            Icon(Icons.Default.Close, "qty-icon", tint = BrandSecondaryText, modifier = Modifier.size(10.dp))
                             Text(
                                 text = item.name,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.DarkGray
+                                color = BrandDark.copy(alpha = 0.9f)
                             )
                         }
                     }
@@ -2026,15 +2105,15 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
                     Text(
                         text = "ORDER ROUTE INFO",
                         fontSize = 11.sp,
-                        color = Color.Gray,
+                        color = BrandSecondaryText,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
 
                     Row {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 4.dp)) {
-                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFF2D3436)))
-                            Box(modifier = Modifier.width(2.dp).height(40.dp).background(Color(0xFFDDDDDD)))
+                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(BrandDark))
+                            Box(modifier = Modifier.width(2.dp).height(40.dp).background(BrandBorder))
                             Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(Color(0xFFFF4757)))
                         }
 
@@ -2046,37 +2125,37 @@ fun HistoryStoryDialog(order: Order, onDismiss: () -> Unit) {
                                 text = firstStore,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.DarkGray
+                                color = BrandDark
                             )
                             Spacer(modifier = Modifier.height(30.dp))
                             Text(
                                 text = order.address.ifEmpty { order.area },
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.DarkGray
+                                color = BrandDark
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Divider(color = Color(0xFFEEEEEE), modifier = Modifier.padding(vertical = 12.dp))
+                    Divider(color = BrandBorder, modifier = Modifier.padding(vertical = 12.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFDDDDDD))
+                                .background(BrandBorder)
                         ) {
-                            Icon(Icons.Default.Person, "User", tint = Color.DarkGray, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Person, "User", tint = BrandSecondaryText, modifier = Modifier.size(16.dp))
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = order.name,
                             fontWeight = FontWeight.Black,
                             fontSize = 13.sp,
-                            color = Color(0xFF2D3436)
+                            color = BrandDark
                         )
                     }
                 }
