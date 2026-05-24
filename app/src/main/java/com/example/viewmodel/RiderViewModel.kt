@@ -530,24 +530,23 @@ class RiderViewModel : ViewModel() {
         try {
             vibrator?.cancel()
             vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
-            // Strong repeating vibration pattern: 1 second vibrating, 0.5 second pause, repeating from start index (0)
+            // Elegant single vibration pattern: 1 second vibrating, 0.5 second pause, then 1 second vibrating (not repeating)
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 1000, 500, 1000), 0))
+                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 1000, 500, 1000), -1))
             } else {
                 @Suppress("DEPRECATION")
-                vibrator?.vibrate(longArrayOf(0, 1000, 500, 1000), 0)
+                vibrator?.vibrate(longArrayOf(0, 1000, 500, 1000), -1)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
         try {
-            val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+            val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context, ringtoneUri)
-                isLooping = true
+                isLooping = false
                 prepare()
                 start()
             }
@@ -557,7 +556,7 @@ class RiderViewModel : ViewModel() {
                 val fallbackUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 mediaPlayer = MediaPlayer().apply {
                     setDataSource(context, fallbackUri)
-                    isLooping = true
+                    isLooping = false
                     prepare()
                     start()
                 }
@@ -736,7 +735,7 @@ fun Map<String, Any>?.toOrder(id: String): Order {
         status = this["status"] as? String ?: "Pending",
         riderPhone = this["riderPhone"] as? String ?: "",
         items = itemsList,
-        total = total,
+        total = if (total > 0.0) total else (subtotal + deliveryFee + surcharge + handlingFee),
         subtotal = subtotal,
         deliveryFee = deliveryFee,
         riderFee = riderFee,

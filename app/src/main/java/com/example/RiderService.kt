@@ -102,13 +102,11 @@ class RiderService : Service() {
                         // Check if we already notified for this order update to prevent repeating sounds on the same order
                         if (!notifiedOrderIds.contains(order.id)) {
                             notifiedOrderIds.add(order.id)
-                            if (!MainActivity.isAppInForeground) {
-                                NotificationHelper.showOrderNotification(
-                                    context = applicationContext,
-                                    orderIdStr = order.oID,
-                                    area = order.area.ifEmpty { "your area" }
-                                )
-                            }
+                            NotificationHelper.showOrderNotification(
+                                context = applicationContext,
+                                orderIdStr = order.oID,
+                                area = order.area.ifEmpty { "your area" }
+                            )
                         }
                     } else if (order.status != "Assigned") {
                         // If order is no longer in Assigned state (e.g. accepted, cancelled, delivered), clean up from notified list
