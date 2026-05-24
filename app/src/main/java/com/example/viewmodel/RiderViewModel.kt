@@ -324,11 +324,19 @@ class RiderViewModel : ViewModel() {
     }
 
     fun setOnlineStatus(online: Boolean, context: Context? = null) {
-        val rider = currentRider.value ?: return
         val firestore = db ?: return
+        val phone = currentRider.value?.phone 
+            ?: context?.getSharedPreferences("RiderPrefs", Context.MODE_PRIVATE)?.getString("riderPhone", null)
+            
+        if (phone.isNullOrEmpty()) {
+            if (context != null) {
+                Toast.makeText(context, "Error: Rider phone not found!", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
         
         isOnline.value = online
-        firestore.collection("riders").document(rider.phone)
+        firestore.collection("riders").document(phone)
             .update("dutyStatus", if (online) "online" else "offline")
             .addOnSuccessListener {
                 if (context != null) {
@@ -428,14 +436,25 @@ class RiderViewModel : ViewModel() {
         val allOrders = allOrdersList.value
 
         val now = System.currentTimeMillis()
-        val calendar = java.util.Calendar.getInstance()
         
-        // Find Today's Epoch Boundaries
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
-        val todayStart = calendar.timeInMillis
+        // Find Today's Epoch Boundaries safely representing both Bangladesh GMT+6 and Local device timezone midnights
+        val targetZone = java.util.TimeZone.getTimeZone("GMT+6")
+        val calendarTarget = java.util.Calendar.getInstance(targetZone)
+        calendarTarget.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendarTarget.set(java.util.Calendar.MINUTE, 0)
+        calendarTarget.set(java.util.Calendar.SECOND, 0)
+        calendarTarget.set(java.util.Calendar.MILLISECOND, 0)
+        val todayStartTarget = calendarTarget.timeInMillis
+
+        val calendarLocal = java.util.Calendar.getInstance()
+        calendarLocal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendarLocal.set(java.util.Calendar.MINUTE, 0)
+        calendarLocal.set(java.util.Calendar.SECOND, 0)
+        calendarLocal.set(java.util.Calendar.MILLISECOND, 0)
+        val todayStartLocal = calendarLocal.timeInMillis
+
+        // Get the wider/most encompassing start of today
+        val todayStart = minOf(todayStartTarget, todayStartLocal)
         val yesterdayStart = todayStart - 86400000L
         val weekStart = todayStart - (7 * 86400000L)
 
@@ -552,46 +571,7 @@ class RiderViewModel : ViewModel() {
     }
 
     private fun playAlarm(context: Context) {
-        if (!isOnline.value) return
-        mediaPlayer?.release()
-        try {
-            vibrator?.cancel()
-            vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
-            // Strong repeating vibration pattern: 1 second vibrating, 0.5 second pause, repeating from start index (0)
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 1000, 500, 1000), 0))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator?.vibrate(longArrayOf(0, 1000, 500, 1000), 0)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
-        try {
-            val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(context, ringtoneUri)
-                isLooping = true
-                prepare()
-                start()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            try {
-                val fallbackUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                mediaPlayer = MediaPlayer().apply {
-                    setDataSource(context, fallbackUri)
-                    isLooping = true
-                    prepare()
-                    start()
-                }
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
-        }
+        // Handled centrally by RiderService in the background and foreground
     }
 
     private fun stopAlarm() {

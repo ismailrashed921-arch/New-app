@@ -1382,8 +1382,35 @@ fun WalletTab(viewModel: RiderViewModel) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(historyOrders) { o ->
-                    val formatter = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
-                    val timeStr = formatter.format(Date(o.time))
+                    val displayTime = if (o.status == "Delivered" && o.deliveredAt > 0L) {
+                        o.deliveredAt
+                    } else if (o.riderAssignedAt > 0L) {
+                        o.riderAssignedAt
+                    } else {
+                        o.time
+                    }
+                    val timeStr = remember(displayTime) {
+                        val orderCal = java.util.Calendar.getInstance()
+                        orderCal.timeInMillis = displayTime
+                        
+                        val todayCal = java.util.Calendar.getInstance()
+                        val yesterdayCal = java.util.Calendar.getInstance()
+                        yesterdayCal.add(java.util.Calendar.DAY_OF_YEAR, -1)
+                        
+                        val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+                        val timeOnly = timeFormat.format(java.util.Date(displayTime))
+                        
+                        if (orderCal.get(java.util.Calendar.YEAR) == todayCal.get(java.util.Calendar.YEAR) &&
+                            orderCal.get(java.util.Calendar.DAY_OF_YEAR) == todayCal.get(java.util.Calendar.DAY_OF_YEAR)) {
+                            "Today, $timeOnly"
+                        } else if (orderCal.get(java.util.Calendar.YEAR) == yesterdayCal.get(java.util.Calendar.YEAR) &&
+                            orderCal.get(java.util.Calendar.DAY_OF_YEAR) == yesterdayCal.get(java.util.Calendar.DAY_OF_YEAR)) {
+                            "Yesterday, $timeOnly"
+                        } else {
+                            val dateFormat = SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault())
+                            dateFormat.format(java.util.Date(displayTime))
+                        }
+                    }
 
                     val fee = o.riderFee ?: o.deliveryFee
                     val totalIncome = fee + o.surcharge

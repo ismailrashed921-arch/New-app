@@ -5,6 +5,8 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.MediaPlayer
+import android.media.RingtoneManager
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
@@ -24,6 +26,10 @@ class RiderService : Service() {
     private var orderListener: ListenerRegistration? = null
     private var currentRiderPhone: String? = null
     private val notifiedOrderIds = HashSet<String>()
+
+    private var mediaPlayer: MediaPlayer? = null
+    private var vibrator: android.os.Vibrator? = null
+    private var isPlayingAlarm = false
 
     override fun onCreate() {
         super.onCreate()
@@ -91,6 +97,20 @@ class RiderService : Service() {
             .addSnapshotListener { snapshot, e ->
                 if (e != null || snapshot == null) return@addSnapshotListener
 
+                var hasAssignedNow = false
+                snapshot.forEach { doc ->
+                    val status = doc.getString("status") ?: ""
+                    if (status == "Assigned") {
+                        hasAssignedNow = true
+                    }
+                }
+
+                if (hasAssignedNow) {
+                    startContinuousAlarm()
+                } else {
+                    stopContinuousAlarm()
+                }
+
                 snapshot.documentChanges.forEach { change ->
                     val data = change.document.data
                     val orderID = change.document.id
@@ -116,8 +136,76 @@ class RiderService : Service() {
             }
     }
 
+    private fun startContinuousAlarm() {
+        if (isPlayingAlarm) return
+        isPlayingAlarm = true
+
+        try {
+            mediaPlayer?.release()
+            val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(applicationContext, ringtoneUri)
+                isLooping = true
+                prepare()
+                start()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            try {
+                val fallbackUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(applicationContext, fallbackUri)
+                    isLooping = true
+                    prepare()
+                    start()
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+        }
+
+        try {
+            vibrator?.cancel()
+            vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+            val pattern = longArrayOf(0, 1000, 500, 1000)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(android.os.VibrationEffect.createWaveform(pattern, 0))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(pattern, 0)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun stopContinuousAlarm() {
+        if (!isPlayingAlarm) return
+        isPlayingAlarm = false
+
+        try {
+            if (mediaPlayer?.isPlaying == true) {
+                mediaPlayer?.stop()
+            }
+            mediaPlayer?.release()
+            mediaPlayer = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        try {
+            vibrator?.cancel()
+            vibrator = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     override fun onDestroy() {
         orderListener?.remove()
+        stopContinuousAlarm()
         super.onDestroy()
     }
 
