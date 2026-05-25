@@ -42,7 +42,7 @@ object NotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_notify_chat)
+            .setSmallIcon(com.example.R.drawable.ic_notification)
             .setContentTitle("New Active Order Assigned! 🚴")
             .setContentText("Order ID: #$orderIdStr in $area. Please accept fast!")
             .setPriority(NotificationCompat.PRIORITY_HIGH)

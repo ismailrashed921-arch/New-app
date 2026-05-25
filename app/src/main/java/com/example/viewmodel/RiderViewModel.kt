@@ -245,7 +245,15 @@ class RiderViewModel : ViewModel() {
                         return@addSnapshotListener
                     }
                     
-                    isOnline.value = rider.dutyStatus == "online"
+                    val prefs = context.getSharedPreferences("RiderPrefs", Context.MODE_PRIVATE)
+                    val localOnlineOverride = if (prefs.contains("dutyOnline")) {
+                        prefs.getBoolean("dutyOnline", false)
+                    } else {
+                        val serverOnline = rider.dutyStatus == "online"
+                        prefs.edit().putBoolean("dutyOnline", serverOnline).apply()
+                        serverOnline
+                    }
+                    isOnline.value = localOnlineOverride
                     
                     // Listen to orders
                     listenToOrders(context, phone)
@@ -339,6 +347,12 @@ class RiderViewModel : ViewModel() {
         }
         
         isOnline.value = online
+        if (context != null) {
+            context.getSharedPreferences("RiderPrefs", Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("dutyOnline", online)
+                .apply()
+        }
         firestore.collection("riders").document(phone)
             .update("dutyStatus", if (online) "online" else "offline")
             .addOnSuccessListener {
@@ -351,13 +365,22 @@ class RiderViewModel : ViewModel() {
                 }
             }
             .addOnFailureListener { e ->
-                isOnline.value = !online
+                // Do NOT revert isOnline.value on failure. Keep the user's toggle state!
                 if (context != null) {
-                    Toast.makeText(
-                        context,
-                        "Failed to update status: ${e.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    val msg = e.message ?: ""
+                    if (msg.contains("PERMISSION_DENIED", ignoreCase = true)) {
+                        Toast.makeText(
+                            context,
+                            if (online) "You are now ONLINE (Local Mode) 🚴" else "You are now OFFLINE (Local Mode) 💤",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            context,
+                            if (online) "You are now ONLINE 🚴" else "You are now OFFLINE 💤",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
             

@@ -68,6 +68,17 @@ private val BrandBorder = Color(0xFFE2E8F0)         // Slate 200 border
 private val BrandWarning = Color(0xFFF59E0B)        // Amber/Orange status
 private val BrandDanger = Color(0xFFEF4444)         // Pastel Coral Red
 
+private fun getDynamicGreeting(name: String): String {
+    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    val greeting = when (hour) {
+        in 5..11 -> "Good Morning"
+        in 12..16 -> "Good Afternoon"
+        in 17..20 -> "Good Evening"
+        else -> "Good Night"
+    }
+    return "$greeting, $name 👋"
+}
+
 @Composable
 fun RiderAppUi(viewModel: RiderViewModel) {
     val currentRiderState by viewModel.currentRider.collectAsState()
@@ -796,7 +807,7 @@ fun MainAppScreen(viewModel: RiderViewModel) {
                 }
             }
         },
-        gesturesEnabled = true
+        gesturesEnabled = false
     ) {
         Scaffold(
             containerColor = BrandBackground,
@@ -932,7 +943,7 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text("Good Morning, ${riderDetail?.name ?: "Partner"} 👋", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
+                                    Text(getDynamicGreeting(riderDetail?.name ?: "Partner"), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text("Stay safe. Deliver smile 😉", fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f))
                                 }
@@ -1511,7 +1522,7 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Good Morning, ${riderDetail?.name ?: "Partner"} 👋", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
+                        Text(getDynamicGreeting(riderDetail?.name ?: "Partner"), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
                         Spacer(modifier = Modifier.height(2.dp))
                         Text("Stay safe. Deliver smile 😉", fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f))
                     }

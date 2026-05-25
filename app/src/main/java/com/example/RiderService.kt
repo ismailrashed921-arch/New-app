@@ -77,7 +77,7 @@ class RiderService : Service() {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Ki-Lagbe Rider Is Online 🚴")
             .setContentText("You are on-duty and will receive new orders.")
-            .setSmallIcon(android.R.drawable.stat_notify_chat)
+            .setSmallIcon(com.example.R.drawable.ic_notification)
             .setOngoing(true)
             .build()
 
