@@ -505,12 +505,19 @@ class RiderViewModel : ViewModel() {
         // Step 2: Extract filtered orders & compute stats
         sortedLedger.forEach { o ->
             // Use deliveredAt for completed orders so stats count on actual completion day
-            val orderTime = if (o.status == "Delivered" && o.deliveredAt > 0L) {
+            var orderTime = if (o.status == "Delivered" && o.deliveredAt > 0L) {
                 o.deliveredAt
+            } else if (o.status == "Cancelled" && o.cancelledAt > 0L) {
+                o.cancelledAt
+            } else if (o.status == "Cancelled" && o.updatedAt > 0L) {
+                o.updatedAt
             } else if (o.riderAssignedAt > 0L) {
                 o.riderAssignedAt
             } else {
                 o.time
+            }
+            if (orderTime <= 0L) {
+                orderTime = System.currentTimeMillis()
             }
 
             // Calculate Tab Filter Matches
@@ -720,21 +727,80 @@ fun Map<String, Any>?.toOrder(id: String): Order {
         else -> 0.0
     }
 
-    val riderAssignedAt = when (val raw = this["riderAssignedAt"]) {
-        is Number -> raw.toLong()
-        is String -> raw.toLongOrNull() ?: 0L
-        else -> 0L
+    val parseTime: (Any?) -> Long = { raw ->
+        if (raw == null) {
+            0L
+        } else {
+            when (raw) {
+                is Number -> raw.toLong()
+                is String -> {
+                    val s = raw.trim()
+                    val longVal = s.toLongOrNull()
+                    if (longVal != null) {
+                        longVal
+                    } else {
+                        val formats = listOf(
+                            "yyyy-MM-dd HH:mm:ss",
+                            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                            "yyyy-MM-dd'T'HH:mm:ss",
+                            "yyyy-MM-dd",
+                            "dd MMM yyyy, hh:mm a",
+                            "dd/MM/yyyy HH:mm:ss",
+                            "dd/MM/yyyy"
+                        )
+                        var parsedTime = 0L
+                        for (fmt in formats) {
+                            try {
+                                val sdf = java.text.SimpleDateFormat(fmt, java.util.Locale.US)
+                                if (fmt.contains("'Z'")) {
+                                    sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                                }
+                                val d = sdf.parse(s)
+                                if (d != null) {
+                                    parsedTime = d.time
+                                    break
+                                }
+                            } catch (e: Exception) {
+                                // ignore
+                            }
+                        }
+                        parsedTime
+                    }
+                }
+                is com.google.firebase.Timestamp -> raw.toDate().time
+                else -> {
+                    if (raw::class.java.simpleName == "Timestamp") {
+                        try {
+                            val method = raw::class.java.getMethod("toDate")
+                            val date = method.invoke(raw) as java.util.Date
+                            date.time
+                        } catch (ex: Exception) {
+                            0L
+                        }
+                    } else {
+                        0L
+                    }
+                }
+            }
+        }
     }
-    val time = when (val raw = this["time"]) {
-        is Number -> raw.toLong()
-        is String -> raw.toLongOrNull() ?: 0L
-        else -> 0L
-    }
-    val deliveredAt = when (val raw = this["deliveredAt"]) {
-        is Number -> raw.toLong()
-        is String -> raw.toLongOrNull() ?: 0L
-        else -> 0L
-    }
+
+    val riderAssignedAt = parseTime(this["riderAssignedAt"])
+    val time = parseTime(this["time"])
+    val deliveredAt = parseTime(this["deliveredAt"])
+    val cancelledAt = parseTime(this["cancelledAt"] ?: this["canceledAt"] ?: this["cancelled_at"] ?: this["canceled_at"] ?: this["cancelledTime"] ?: this["canceledTime"])
+    val updatedAt = parseTime(this["updatedAt"] ?: this["updated_at"] ?: this["updatedTime"] ?: this["lastUpdated"])
+
+    val rawStatus = (this["status"] as? String)?.trim() ?: "Pending"
+    val status = if (rawStatus.equals("delivered", ignoreCase = true)) "Delivered"
+                else if (rawStatus.equals("cancelled", ignoreCase = true) || rawStatus.equals("canceled", ignoreCase = true) || rawStatus.contains("cancel", ignoreCase = true) || rawStatus.equals("rejected", ignoreCase = true) || rawStatus.equals("reject", ignoreCase = true)) "Cancelled"
+                else if (rawStatus.equals("assigned", ignoreCase = true)) "Assigned"
+                else if (rawStatus.equals("accepted", ignoreCase = true)) "Accepted"
+                else if (rawStatus.equals("pending", ignoreCase = true)) "Pending"
+                else if (rawStatus.equals("processing", ignoreCase = true)) "Processing"
+                else if (rawStatus.equals("on the way", ignoreCase = true) || rawStatus.equals("on_the_way", ignoreCase = true) || rawStatus.equals("ontheway", ignoreCase = true)) "On the Way"
+                else rawStatus
 
     return Order(
         id = id,
@@ -743,7 +809,7 @@ fun Map<String, Any>?.toOrder(id: String): Order {
         phone = this["phone"] as? String ?: "",
         area = this["area"] as? String ?: "",
         address = this["address"] as? String ?: "",
-        status = this["status"] as? String ?: "Pending",
+        status = status,
         riderPhone = this["riderPhone"] as? String ?: "",
         items = itemsList,
         total = if (total > 0.0) total else (subtotal + deliveryFee + surcharge + handlingFee),
@@ -756,6 +822,8 @@ fun Map<String, Any>?.toOrder(id: String): Order {
         riderAssignedAt = riderAssignedAt,
         time = time,
         deliveredAt = deliveredAt,
+        cancelledAt = cancelledAt,
+        updatedAt = updatedAt,
         cashSettled = when (val raw = this["cashSettled"]) {
             is Boolean -> raw
             is String -> raw.toBoolean()

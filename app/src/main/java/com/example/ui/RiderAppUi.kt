@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -165,12 +166,7 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
                         fontSize = 28.sp,
                         color = BrandDark
                     )
-                    Text(
-                        text = "Partner Dashboard",
-                        fontSize = 14.sp,
-                        color = BrandSecondaryText,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
-                    )
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     OutlinedTextField(
                         value = phone,
@@ -510,6 +506,21 @@ fun OnlineOfflinePill(
     val textColor = if (isOnline) BrandPrimary else BrandDanger
     val textLabel = if (isOnline) "ONLINE" else "OFFLINE"
 
+    val dotAlpha = if (isOnline) {
+        val infiniteTransition = rememberInfiniteTransition(label = "top_bar_pulse")
+        infiniteTransition.animateFloat(
+            initialValue = 0.25f,
+            targetValue = 1.0f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(800, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "dot_alpha"
+        ).value
+    } else {
+        1.0f
+    }
+
     Card(
         shape = RoundedCornerShape(50.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
@@ -527,7 +538,7 @@ fun OnlineOfflinePill(
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
-                    .background(dotColor)
+                    .background(dotColor.copy(alpha = dotAlpha))
             )
             Text(
                 text = textLabel,
@@ -1485,6 +1496,44 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
         }
     ) { padding ->
         if (activeOrders.isEmpty()) {
+            val homeInfiniteTransition = rememberInfiniteTransition(label = "home_pulse")
+            val radarScale1 by homeInfiniteTransition.animateFloat(
+                initialValue = 0.95f,
+                targetValue = 1.35f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1500, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "radarScale1"
+            )
+            val radarScale2 by homeInfiniteTransition.animateFloat(
+                initialValue = 0.9f,
+                targetValue = 1.15f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1100, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "radarScale2"
+            )
+            val radarScale3 by homeInfiniteTransition.animateFloat(
+                initialValue = 0.85f,
+                targetValue = 1.05f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(900, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "radarScale3"
+            )
+            val homeDotAlpha by homeInfiniteTransition.animateFloat(
+                initialValue = 0.2f,
+                targetValue = 1.0f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(850, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "homeDotAlpha"
+            )
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -1501,18 +1550,30 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                     Box(
                         modifier = Modifier
                             .size(130.dp)
+                            .graphicsLayer {
+                                scaleX = radarScale1
+                                scaleY = radarScale1
+                            }
                             .clip(CircleShape)
                             .background(BrandPrimary.copy(alpha = 0.08f))
                     )
                     Box(
                         modifier = Modifier
                             .size(90.dp)
+                            .graphicsLayer {
+                                scaleX = radarScale2
+                                scaleY = radarScale2
+                            }
                             .clip(CircleShape)
                             .background(BrandPrimary.copy(alpha = 0.15f))
                     )
                     Box(
                         modifier = Modifier
                             .size(50.dp)
+                            .graphicsLayer {
+                                scaleX = radarScale3
+                                scaleY = radarScale3
+                            }
                             .clip(CircleShape)
                             .background(BrandPrimary),
                         contentAlignment = Alignment.Center
@@ -1536,7 +1597,7 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                         modifier = Modifier
                             .size(10.dp)
                             .clip(CircleShape)
-                            .background(BrandPrimary)
+                            .background(BrandPrimary.copy(alpha = homeDotAlpha))
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
