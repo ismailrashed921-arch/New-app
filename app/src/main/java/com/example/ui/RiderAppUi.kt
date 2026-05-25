@@ -593,8 +593,7 @@ fun RiderTopBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { onMenuClick() }
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
@@ -1495,166 +1494,169 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
             RiderTopBar(title = "Ki-Lagbe Rider", viewModel = viewModel, onMenuClick = onMenuClick)
         }
     ) { padding ->
-        if (activeOrders.isEmpty()) {
-            val homeInfiniteTransition = rememberInfiniteTransition(label = "home_pulse")
-            val radarScale1 by homeInfiniteTransition.animateFloat(
-                initialValue = 0.95f,
-                targetValue = 1.35f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(1500, easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "radarScale1"
-            )
-            val radarScale2 by homeInfiniteTransition.animateFloat(
-                initialValue = 0.9f,
-                targetValue = 1.15f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(1100, easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "radarScale2"
-            )
-            val radarScale3 by homeInfiniteTransition.animateFloat(
-                initialValue = 0.85f,
-                targetValue = 1.05f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(900, easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "radarScale3"
-            )
-            val homeDotAlpha by homeInfiniteTransition.animateFloat(
-                initialValue = 0.2f,
-                targetValue = 1.0f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(850, easing = LinearEasing),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "homeDotAlpha"
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // Good Morning / Hi MD Rased Green Card Banner (ALWAYS SHOWN BENEATH HEADER)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = BrandPrimary),
+                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
             ) {
-                // Pulse radar style circle layout
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(150.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(130.dp)
-                            .graphicsLayer {
-                                scaleX = radarScale1
-                                scaleY = radarScale1
-                            }
-                            .clip(CircleShape)
-                            .background(BrandPrimary.copy(alpha = 0.08f))
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(90.dp)
-                            .graphicsLayer {
-                                scaleX = radarScale2
-                                scaleY = radarScale2
-                            }
-                            .clip(CircleShape)
-                            .background(BrandPrimary.copy(alpha = 0.15f))
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .graphicsLayer {
-                                scaleX = radarScale3
-                                scaleY = radarScale3
-                            }
-                            .clip(CircleShape)
-                            .background(BrandPrimary),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.TwoWheeler,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(26.dp)
-                        )
+                    Column {
+                        Text("Good Morning, ${riderDetail?.name ?: "Partner"} 👋", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text("Stay safe. Deliver smile 😉", fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f))
                     }
                 }
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(BrandPrimary.copy(alpha = homeDotAlpha))
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "Waiting for new orders...",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = BrandDark,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Seeking incoming delivery requests automatically. Keep your internet stable to receive nearby orders.",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BrandSecondaryText,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(bottom = 100.dp, top = 8.dp)
-            ) {
-                // Good Morning Rased Green Card Banner
-                item {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = BrandPrimary),
-                        shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+
+            if (activeOrders.isEmpty()) {
+                val homeInfiniteTransition = rememberInfiniteTransition(label = "home_pulse")
+                val radarScale1 by homeInfiniteTransition.animateFloat(
+                    initialValue = 0.95f,
+                    targetValue = 1.35f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1500, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "radarScale1"
+                )
+                val radarScale2 by homeInfiniteTransition.animateFloat(
+                    initialValue = 0.9f,
+                    targetValue = 1.15f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1100, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "radarScale2"
+                )
+                val radarScale3 by homeInfiniteTransition.animateFloat(
+                    initialValue = 0.85f,
+                    targetValue = 1.05f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(900, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "radarScale3"
+                )
+                val homeDotAlpha by homeInfiniteTransition.animateFloat(
+                    initialValue = 0.2f,
+                    targetValue = 1.0f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(850, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "homeDotAlpha"
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f)
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Pulse radar style circle layout
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(150.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Box(
+                            modifier = Modifier
+                                .size(130.dp)
+                                .graphicsLayer {
+                                    scaleX = radarScale1
+                                    scaleY = radarScale1
+                                }
+                                .clip(CircleShape)
+                                .background(BrandPrimary.copy(alpha = 0.08f))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(90.dp)
+                                .graphicsLayer {
+                                    scaleX = radarScale2
+                                    scaleY = radarScale2
+                                }
+                                .clip(CircleShape)
+                                .background(BrandPrimary.copy(alpha = 0.15f))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .graphicsLayer {
+                                    scaleX = radarScale3
+                                    scaleY = radarScale3
+                                }
+                                .clip(CircleShape)
+                                .background(BrandPrimary),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Column {
-                                Text("Good Morning, ${riderDetail?.name ?: "Partner"} 👋", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text("Stay safe. Deliver smile 😉", fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f))
-                            }
+                            Icon(
+                                imageVector = Icons.Default.TwoWheeler,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(26.dp)
+                            )
                         }
                     }
-                }
 
-                item {
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(BrandPrimary.copy(alpha = homeDotAlpha))
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Waiting for new orders...",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = BrandDark,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     Text(
-                        text = "ACTIVE ASSIGNED ORDERS (${activeOrders.size})",
+                        text = "Seeking incoming delivery requests automatically. Keep your internet stable to receive nearby orders.",
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.Bold,
                         color = BrandSecondaryText,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().weight(1f),
+                    contentPadding = PaddingValues(bottom = 100.dp, top = 8.dp)
+                ) {
+                    item {
+                        Text(
+                            text = "ACTIVE ASSIGNED ORDERS (${activeOrders.size})",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Black,
+                            color = BrandSecondaryText,
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                        )
+                    }
 
                 items(activeOrders) { order ->
                     Card(
@@ -1823,6 +1825,7 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
             }
         }
     }
+}
 }
 
 @Composable
