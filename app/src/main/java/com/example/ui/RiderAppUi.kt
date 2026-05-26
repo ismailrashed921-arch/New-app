@@ -2052,17 +2052,7 @@ fun WalletTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                             Text("TOTAL EARNING BALANCE", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.White.copy(alpha = 0.82f), letterSpacing = 0.5.sp)
                             Spacer(modifier = Modifier.height(6.dp))
                             Text("৳${earnings.toInt()}", fontSize = 34.sp, fontWeight = FontWeight.Black, color = Color.White)
-                            Text("Settleable anytime on request", fontSize = 11.sp, color = Color.White.copy(alpha = 0.75f), fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
-                            Spacer(modifier = Modifier.height(18.dp))
-                            Button(
-                                onClick = { Toast.makeText(context, "Withdrawal initiated!", Toast.LENGTH_SHORT).show() },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.align(Alignment.Start).height(40.dp),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
-                            ) {
-                                Text("Withdraw Balance", color = BrandPrimary, fontWeight = FontWeight.Black, fontSize = 11.sp)
-                            }
+                            Text("Settleable automatically on scheduled payouts", fontSize = 11.sp, color = Color.White.copy(alpha = 0.75f), fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
                         }
                     }
                 }
