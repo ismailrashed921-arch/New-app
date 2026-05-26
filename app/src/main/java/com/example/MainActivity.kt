@@ -89,6 +89,8 @@ class MainActivity : ComponentActivity() {
         val savedPhone = prefs.getString("riderPhone", null)
         if (!savedPhone.isNullOrEmpty()) {
             viewModel.startApp(applicationContext, savedPhone)
+        } else {
+            viewModel.isInitializing.value = false
         }
 
         setContent {

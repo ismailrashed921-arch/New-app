@@ -76,6 +76,66 @@ class RiderViewModel : ViewModel() {
     // Pin State
     val pinChangeState = MutableStateFlow<String?>(null) // result message
 
+    // Diagnostics States
+    val showDiagnosticsScreen = MutableStateFlow(false)
+    val diagWifiChecked = MutableStateFlow(false)
+    val diagLocationChecked = MutableStateFlow(false)
+    val diagNotificationChecked = MutableStateFlow(false)
+    val diagSoundChecked = MutableStateFlow(false)
+    val diagTimeChecked = MutableStateFlow(false)
+    val isInitializing = MutableStateFlow(true)
+
+    fun openDiagnostics() {
+        showDiagnosticsScreen.value = true
+    }
+
+    fun closeDiagnostics() {
+        showDiagnosticsScreen.value = false
+    }
+
+    fun runAllDiagnostics(context: Context) {
+        // 1. Internet connection check
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+        var isNetworkConnected = false
+        if (connectivityManager != null) {
+            val activeNetwork = connectivityManager.activeNetwork
+            val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+            isNetworkConnected = capabilities != null && capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        }
+        diagWifiChecked.value = isNetworkConnected
+
+        // 2. Location permissions check
+        val fineLocation = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val coarseLocation = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        diagLocationChecked.value = fineLocation || coarseLocation
+
+        // 3. Notification status check
+        diagNotificationChecked.value = androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
+
+        // 4. Time settings check (Automatic Time)
+        var isAutoTime = true
+        try {
+            isAutoTime = android.provider.Settings.Global.getInt(context.contentResolver, android.provider.Settings.Global.AUTO_TIME) == 1
+        } catch (e: Exception) {
+            isAutoTime = true
+        }
+        diagTimeChecked.value = isAutoTime
+    }
+
+    fun triggerTestNotification(context: Context) {
+        NotificationHelper.showTestNotification(context)
+        
+        // Play notification ringtone for Sound diagnostics
+        try {
+            val notificationUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION)
+            val r = android.media.RingtoneManager.getRingtone(context, notificationUri)
+            r.play()
+            diagSoundChecked.value = true
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun initFirebase(context: Context) {
         if (db == null) {
             try {
@@ -230,10 +290,14 @@ class RiderViewModel : ViewModel() {
     }
 
     private fun loadRider(context: Context, phone: String) {
-        val firestore = db ?: return
+        val firestore = db ?: run {
+            isInitializing.value = false
+            return
+        }
         riderListener?.remove()
         riderListener = firestore.collection("riders").document(phone)
             .addSnapshotListener { snapshot, e ->
+                isInitializing.value = false
                 if (e != null || snapshot == null) return@addSnapshotListener
                 if (snapshot.exists()) {
                     val map = snapshot.data

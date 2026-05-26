@@ -5,18 +5,32 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- Vertical Stem -->
+    <!-- K Vertical Stem -->
     <path
-        android:pathData="M38,28 L38,80"
+        android:pathData="M32,28 L32,80"
         android:strokeColor="#00C896"
-        android:strokeWidth="12"
+        android:strokeWidth="11"
         android:strokeLineCap="round" />
         
-    <!-- Diagonals joining nicely at the stem -->
+    <!-- K Diagonals -->
     <path
-        android:pathData="M70,28 L40,54 L70,80"
+        android:pathData="M58,28 L34,54 L58,80"
         android:strokeColor="#00C896"
-        android:strokeWidth="12"
+        android:strokeWidth="11"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
+
+    <!-- i Vertical Stem -->
+    <path
+        android:pathData="M76,46 L76,80"
+        android:strokeColor="#00C896"
+        android:strokeWidth="11"
+        android:strokeLineCap="round" />
+
+    <!-- i Dot -->
+    <path
+        android:pathData="M76,28 L76,28.1"
+        android:strokeColor="#00C896"
+        android:strokeWidth="11"
+        android:strokeLineCap="round" />
 </vector>

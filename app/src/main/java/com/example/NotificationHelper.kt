@@ -60,4 +60,29 @@ object NotificationHelper {
             e.printStackTrace()
         }
     }
+
+    fun showTestNotification(context: Context) {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(
+            context, 1, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(com.example.R.drawable.ic_notification)
+            .setContentTitle("Ki-Lagbe Diagnostic Test! ⚡")
+            .setContentText("Congratulations! Your phone notification system is working perfectly.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        try {
+            notificationManager.notify(9999, builder.build())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

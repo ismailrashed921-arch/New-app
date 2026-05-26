@@ -4,8 +4,33 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Modern bold stylized K silhouette for notifications -->
+    
+    <!-- K Stem -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M 6,3 C 5.4,3 5,3.4 5,4 L 5,20 C 5,20.6 5.4,21 6,21 L 8.5,21 C 9.1,21 9.5,20.6 9.5,20 L 9.5,13.2 L 15.1,20.4 C 15.4,20.8 15.9,21 16.4,21 L 19.3,21 C 20.1,21 20.5,20.1 20.0,19.5 L 13.5,11.2 L 19.6,3.5 C 20.1,2.9 19.7,2 18.9,2 L 15.8,2 C 15.3,2 14.9,2.2 14.6,2.6 L 9.5,9.0 L 9.5,4 C 9.5,3.4 9.1,3 8.5,3 L 6,3 Z" />
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M 6,5 L 6,19" />
+        
+    <!-- K Diagonals -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 12,5 L 6.5,12 L 12,19" />
+        
+    <!-- i Stem -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M 17,10 L 17,19" />
+        
+    <!-- i Dot -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M 17,6 L 17,6.1" />
 </vector>
