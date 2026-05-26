@@ -82,9 +82,7 @@ private fun getDynamicGreeting(name: String): String {
 @Composable
 fun RiderAppUi(viewModel: RiderViewModel) {
     val currentRiderState by viewModel.currentRider.collectAsState()
-    val assignedOrderPopup by viewModel.assignedOrderPopup.collectAsState()
     val isInitializing by viewModel.isInitializing.collectAsState()
-    val showDiagnosticsScreen by viewModel.showDiagnosticsScreen.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize().background(BrandBackground)) {
         when {
@@ -96,9 +94,6 @@ fun RiderAppUi(viewModel: RiderViewModel) {
                     CircularProgressIndicator(color = BrandPrimary)
                 }
             }
-            showDiagnosticsScreen -> {
-                DiagnosticsScreen(viewModel = viewModel)
-            }
             currentRiderState == null -> {
                 AuthScreen(viewModel)
             }
@@ -108,12 +103,6 @@ fun RiderAppUi(viewModel: RiderViewModel) {
             else -> {
                 MainAppScreen(viewModel)
             }
-        }
-
-        assignedOrderPopup?.let { order ->
-            NewOrderPopupDialog(order = order, onAccept = {
-                viewModel.acceptOrder(order.id)
-            })
         }
     }
 }
@@ -650,41 +639,6 @@ fun RiderTopBar(
                     OnlineOfflinePill(viewModel = viewModel)
                 }
                 
-                // Three-dot menu for Diagnostics
-                if (showOnlineToggle) {
-                    var showMenu by remember { mutableStateOf(false) }
-                    Box {
-                        IconButton(onClick = { showMenu = !showMenu }) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More Options",
-                                tint = BrandDark,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Diagnostics", fontWeight = FontWeight.Bold) },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Build,
-                                        contentDescription = null,
-                                        tint = BrandPrimary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                },
-                                onClick = {
-                                    showMenu = false
-                                    viewModel.openDiagnostics()
-                                }
-                            )
-                        }
-                    }
-                }
-                
                 actions?.invoke(this)
             }
         }
@@ -1119,29 +1073,19 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                     // Bottom Action Panel
                     item {
                         Spacer(modifier = Modifier.height(20.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        Button(
+                            onClick = { viewModel.acceptOrder(activeOrder.id) },
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .height(54.dp)
+                                .shadow(8.dp, RoundedCornerShape(16.dp), spotColor = BrandPrimary)
                         ) {
-                            Button(
-                                onClick = { viewModel.setOnlineStatus(false, context) },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                                shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier.weight(0.4f).height(54.dp).border(1.dp, BrandDanger, RoundedCornerShape(16.dp))
-                            ) {
-                                Text("REJECT", color = BrandDanger, fontWeight = FontWeight.ExtraBold)
-                            }
-
-                            Button(
-                                onClick = { viewModel.acceptOrder(activeOrder.id) },
-                                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
-                                shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier.weight(0.6f).height(54.dp).shadow(8.dp, RoundedCornerShape(16.dp), spotColor = BrandPrimary)
-                            ) {
-                                Icon(Icons.Default.Check, null, tint = Color.White)
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("ACCEPT ORDER", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
-                            }
+                            Icon(Icons.Default.Check, null, tint = Color.White)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("ACCEPT ORDER", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
                         }
                     }
                 }
@@ -1840,29 +1784,15 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                             
                             // Row of buttons for actions
                             if (order.status == "Assigned" || order.status == "Pending") {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                Button(
+                                    onClick = { viewModel.acceptOrder(order.id) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.fillMaxWidth().height(48.dp)
                                 ) {
-                                    Button(
-                                        onClick = { viewModel.setOnlineStatus(false, context) },
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                                        shape = RoundedCornerShape(12.dp),
-                                        modifier = Modifier.weight(0.4f).height(46.dp).border(1.dp, BrandDanger, RoundedCornerShape(12.dp))
-                                    ) {
-                                        Text("REJECT", color = BrandDanger, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
-                                    }
-                                    
-                                    Button(
-                                        onClick = { viewModel.acceptOrder(order.id) },
-                                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
-                                        shape = RoundedCornerShape(12.dp),
-                                        modifier = Modifier.weight(0.6f).height(46.dp)
-                                    ) {
-                                        Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("ACCEPT ORDER", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
-                                    }
+                                    Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("ACCEPT ORDER", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp)
                                 }
                             } else {
                                 Button(
@@ -2131,7 +2061,7 @@ fun WalletTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                                 modifier = Modifier.align(Alignment.Start).height(40.dp),
                                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
                             ) {
-                                Text("Withdraw to Bkash", color = BrandPrimary, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                                Text("Withdraw Balance", color = BrandPrimary, fontWeight = FontWeight.Black, fontSize = 11.sp)
                             }
                         }
                     }
@@ -2930,258 +2860,6 @@ fun OnlineHoursChartCanvas(modifier: Modifier = Modifier) {
         pts.forEach { pt ->
             drawCircle(Color.White, 8f, pt)
             drawCircle(Color(0xFF00C896), 4f, pt)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DiagnosticsScreen(viewModel: RiderViewModel) {
-    val context = LocalContext.current
-    val wifiOk by viewModel.diagWifiChecked.collectAsState()
-    val locationOk by viewModel.diagLocationChecked.collectAsState()
-    val notificationOk by viewModel.diagNotificationChecked.collectAsState()
-    val soundOk by viewModel.diagSoundChecked.collectAsState()
-    val timeOk by viewModel.diagTimeChecked.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.runAllDiagnostics(context)
-    }
-
-    Scaffold(
-        containerColor = Color.White,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Diagnostics",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 20.sp,
-                        color = BrandDark
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { viewModel.closeDiagnostics() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Go Back",
-                            tint = BrandDark
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White),
-                modifier = Modifier.border(0.dp, Color.Transparent)
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(bottom = 90.dp) // Space for bottom button
-            ) {
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Timeline of diagnostic checks
-                DiagnosticItem(
-                    index = 1,
-                    isLast = false,
-                    title = "Internet Connectivity",
-                    description = "We will check the stability of your current internet connection.",
-                    isChecked = wifiOk,
-                    icon = Icons.Default.SignalCellularAlt
-                )
-                
-                DiagnosticItem(
-                    index = 2,
-                    isLast = false,
-                    title = "Current Location",
-                    description = "We will check your GPS to show your current location accurately.",
-                    isChecked = locationOk,
-                    icon = Icons.Default.MyLocation
-                )
-                
-                DiagnosticItem(
-                    index = 3,
-                    isLast = false,
-                    title = "Notification Status",
-                    description = "We will send you a test notification.",
-                    isChecked = notificationOk,
-                    icon = Icons.Default.Notifications
-                )
-                
-                DiagnosticItem(
-                    index = 4,
-                    isLast = false,
-                    title = "Sound Status",
-                    description = "We will send you a test sound.",
-                    isChecked = soundOk,
-                    icon = Icons.Default.VolumeUp
-                )
-                
-                DiagnosticItem(
-                    index = 5,
-                    isLast = true,
-                    title = "Time Settings",
-                    description = "We will check how accurately your device is showing time.",
-                    isChecked = timeOk,
-                    icon = Icons.Default.AccessTime
-                )
-            }
-
-            // Bottom Red action button matching screenshot Pathao style
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                shape = RoundedCornerShape(0.dp),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Button(
-                        onClick = {
-                            viewModel.triggerTestNotification(context)
-                            viewModel.runAllDiagnostics(context)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE12D2D)), // Bold Pathao/Red Accent
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                    ) {
-                        Text(
-                            text = "CHECK NOTIFICATION",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DiagnosticItem(
-    index: Int,
-    isLast: Boolean,
-    title: String,
-    description: String,
-    isChecked: Boolean,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Left Column: Custom Timeline Circle and Line
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(36.dp)
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isChecked) Color(0xFF00C896) else Color(0xFF94A3B8)
-                    )
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-            
-            if (!isLast) {
-                Box(
-                    modifier = Modifier
-                        .width(3.dp)
-                        .height(84.dp)
-                        .background(
-                            if (isChecked) Color(0xFF00C896).copy(alpha = 0.5f) else Color(0xFFCBD5E1)
-                        )
-                )
-            }
-        }
-
-        // Right Column: Content and Badge
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(bottom = if (isLast) 16.dp else 24.dp)
-        ) {
-            Text(
-                text = title,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = BrandDark
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = description,
-                fontSize = 14.sp,
-                color = BrandSecondaryText,
-                lineHeight = 19.sp
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            
-            // Checked/Pending Badge status chip
-            if (isChecked) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .border(1.dp, Color(0xFF00C896).copy(alpha = 0.3f), RoundedCornerShape(6.dp))
-                        .background(Color(0xFFE6F9F4), RoundedCornerShape(6.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        tint = Color(0xFF00C896),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = "Checked",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        color = Color(0xFF00C896)
-                    )
-                }
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .border(1.dp, Color(0xFF64748B).copy(alpha = 0.3f), RoundedCornerShape(6.dp))
-                        .background(Color(0xFFF1F5F9), RoundedCornerShape(6.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "Pending",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        color = Color(0xFF64748B)
-                    )
-                }
-            }
         }
     }
 }

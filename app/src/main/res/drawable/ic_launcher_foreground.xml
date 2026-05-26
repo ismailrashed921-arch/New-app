@@ -5,32 +5,32 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     
-    <!-- K Vertical Stem -->
+    <!-- Outer Glow or beautiful branding ring -->
     <path
-        android:pathData="M32,28 L32,80"
+        android:pathData="M 54, 54 m -42, 0 a 42,42 0 1,1 84,0 a 42,42 0 1,1 -84,0"
         android:strokeColor="#00C896"
-        android:strokeWidth="11"
-        android:strokeLineCap="round" />
-        
-    <!-- K Diagonals -->
-    <path
-        android:pathData="M58,28 L34,54 L58,80"
-        android:strokeColor="#00C896"
-        android:strokeWidth="11"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
+        android:strokeWidth="1"
+        android:fillColor="#0D00C896" />
 
-    <!-- i Vertical Stem -->
+    <!-- Stylized Modern 'K' Ribbon -->
     <path
-        android:pathData="M76,46 L76,80"
-        android:strokeColor="#00C896"
-        android:strokeWidth="11"
-        android:strokeLineCap="round" />
+        android:pathData="M34,26 C34,24.34 35.34,23 37,23 C38.66,23 40,24.34 40,26 L40,82 C40,83.66 38.66,85 37,85 C35.34,85 34,83.66 34,82 Z"
+        android:fillColor="#00C896" />
+
+    <!-- Curved Ribbon Diagonals with perfectly proportioned branching -->
+    <path
+        android:pathData="M 62,26 C 63.5,27.5 63.5,30 62,31.5 L 43.5,52 L 62,72.5 C 63.5,74 63.5,76.5 62,78 C 60.5,79.5 58,79.5 56.5,78 L 36.5,56 C 34.5,54 34.5,50 36.5,48 L 56.5,26 C 58,24.5 60.5,24.5 62,26 Z"
+        android:fillColor="#00E6A9" />
+
+    <!-- Stylized Modern 'i' Ribbon -->
+    <path
+        android:pathData="M72,46 C72,44.34 73.34,43 75,43 C76.66,43 78,44.34 78,46 L78,82 C78,83.66 76.66,85 75,85 C73.34,85 72,83.66 72,82 Z"
+        android:fillColor="#00C896" />
 
     <!-- i Dot -->
     <path
-        android:pathData="M76,28 L76,28.1"
-        android:strokeColor="#00C896"
+        android:pathData="M 75, 27 A 5.5,5.5 0 1,1 75.01,27"
+        android:strokeColor="#00E6A9"
         android:strokeWidth="11"
         android:strokeLineCap="round" />
 </vector>
