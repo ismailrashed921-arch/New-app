@@ -58,15 +58,17 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 // Premium Delivery Startup Colors
-private val BrandPrimary = Color(0xFF00C896)       // Vibrant Premium Green
-private val BrandDark = Color(0xFF0F172A)          // Slate 900 / Deep Slate
-private val BrandLightSlate = Color(0xFFF1F5F9)     // Slate 100 for subtle layers
-private val BrandBackground = Color(0xFFF8FAFC)     // Main app background
-private val BrandAccent = Color(0xFF14B8A6)         // Cool Teal
-private val BrandSecondaryText = Color(0xFF64748B)  // Muted body text
-private val BrandBorder = Color(0xFFE2E8F0)         // Slate 200 border
-private val BrandWarning = Color(0xFFF59E0B)        // Amber/Orange status
+private val BrandPrimary = Color(0xFF00B074)       // Beautiful Emerald Green matching the screenshot 100%
+private val BrandDark = Color(0xFF111827)          // Warm Slate Dark Text
+private val BrandLightSlate = Color(0xFFF3F4F6)     // Slate 100
+private val BrandBackground = Color(0xFFF4F6F8)     // App Background Canvas
+private val BrandAccent = Color(0xFF10B981)         // Accent Green
+private val BrandSecondaryText = Color(0xFF6B7280)  // Cool Grey Text
+private val BrandBorder = Color(0xFFE5E7EB)         // Cool Slate Border
+private val BrandWarning = Color(0xFFF59E0B)        // Amber Status Warning
 private val BrandDanger = Color(0xFFEF4444)         // Pastel Coral Red
+
+const val DEFAULT_RIDER_AVATAR = "https://images.unsplash.com/photo-1607990283143-e81e7a2c93ab?auto=format&fit=crop&q=80&w=200"
 
 private fun getDynamicGreeting(name: String): String {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -77,6 +79,288 @@ private fun getDynamicGreeting(name: String): String {
         else -> "Good Night"
     }
     return "$greeting, $name 👋"
+}
+
+@Composable
+fun StatsMiniCard(
+    title: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconColor: Color = BrandPrimary,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        modifier = modifier.border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = title,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BrandSecondaryText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = value,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Black,
+                color = BrandDark
+            )
+        }
+    }
+}
+
+@Composable
+fun RiderProfileBannerAndStats(
+    viewModel: RiderViewModel,
+    activeOrdersCount: Int,
+    countDel: Int,
+    earnings: Double
+) {
+    val context = LocalContext.current
+    val isOnline by viewModel.isOnline.collectAsState()
+    val riderDetail by viewModel.currentRider.collectAsState()
+
+    Column {
+        // Green Banner Card
+        Card(
+            colors = CardDefaults.cardColors(containerColor = BrandPrimary),
+            shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Profile Picture
+                    AsyncImage(
+                        model = riderDetail?.photo?.ifEmpty { "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150" } 
+                            ?: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150",
+                        contentDescription = "Rider Avatar",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, Color.White, CircleShape)
+                    )
+                    Column {
+                        Text(
+                            text = "Good Evening, ${riderDetail?.name?.split(" ")?.firstOrNull() ?: "Rased"} 👋",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 16.sp,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "Rating",
+                                tint = Color(0xFFFBBF24),
+                                modifier = Modifier.size(14.dp)
+                              )
+                              Spacer(modifier = Modifier.width(4.dp))
+                              Text(
+                                  text = "5.0 ($countDel)",
+                                  fontSize = 12.sp,
+                                  fontWeight = FontWeight.Bold,
+                                  color = Color.White.copy(alpha = 0.9f)
+                              )
+                          }
+                      }
+                  }
+
+                  // Switch toggle inline
+                  Card(
+                      shape = RoundedCornerShape(50.dp),
+                      colors = CardDefaults.cardColors(containerColor = if (isOnline) Color.White else Color(0xFFFFF0F0)),
+                      modifier = Modifier
+                          .clip(RoundedCornerShape(50.dp))
+                          .clickable { viewModel.setOnlineStatus(!isOnline, context) }
+                          .border(1.dp, if (isOnline) Color.White else BrandDanger.copy(alpha = 0.5f), RoundedCornerShape(50.dp))
+                  ) {
+                      Row(
+                          modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                          verticalAlignment = Alignment.CenterVertically,
+                          horizontalArrangement = Arrangement.spacedBy(4.dp)
+                      ) {
+                          Box(
+                              modifier = Modifier
+                                  .size(6.dp)
+                                  .clip(CircleShape)
+                                  .background(if (isOnline) BrandPrimary else BrandDanger)
+                          )
+                          Text(
+                              text = if (isOnline) "ONLINE" else "OFFLINE",
+                              fontSize = 9.sp,
+                              fontWeight = FontWeight.Black,
+                              color = if (isOnline) BrandPrimary else BrandDanger,
+                              letterSpacing = 0.5.sp
+                          )
+                      }
+                  }
+              }
+          }
+
+          Spacer(modifier = Modifier.height(10.dp))
+
+          // Symmetrical Stats Row below green profile banner
+          Row(
+              modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(horizontal = 16.dp, vertical = 6.dp),
+              horizontalArrangement = Arrangement.spacedBy(10.dp)
+          ) {
+              StatsMiniCard(
+                  title = "Active Orders",
+                  value = "$activeOrdersCount",
+                  icon = Icons.Default.TwoWheeler,
+                  iconColor = BrandPrimary,
+                  modifier = Modifier.weight(1f)
+              )
+              StatsMiniCard(
+                  title = "Completed",
+                  value = "$countDel",
+                  icon = Icons.Default.CheckCircle,
+                  iconColor = BrandPrimary,
+                  modifier = Modifier.weight(1f)
+              )
+              StatsMiniCard(
+                  title = "Today's Earning",
+                  value = "৳${earnings.toInt()}",
+                  icon = Icons.Default.AccountBalanceWallet,
+                  iconColor = BrandPrimary,
+                  modifier = Modifier.weight(1.2f)
+              )
+          }
+      }
+  }
+
+@Composable
+fun OrderTimelineStepper(status: String) {
+    val steps = listOf("Accepted", "Processing", "On the Way", "Delivered")
+    val currentStepIndex = steps.indexOf(status).coerceAtLeast(0)
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            steps.forEachIndexed { index, stepName ->
+                val isCompleted = index <= currentStepIndex
+                val isCurrent = index == currentStepIndex
+                val color = if (isCompleted) BrandPrimary else Color(0xFFD1D5DB)
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Line connector on left
+                        if (index > 0) {
+                            Divider(
+                                color = if (index <= currentStepIndex) BrandPrimary else Color(0xFFE5E7EB),
+                                thickness = 3.dp,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        // Step indicator bubble
+                        Box(
+                            modifier = Modifier
+                                .size(22.dp)
+                                .clip(CircleShape)
+                                .background(if (isCompleted) BrandPrimary else Color.White)
+                                .border(1.5.dp, color, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (isCompleted) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                            } else {
+                                Text(
+                                    text = "${index + 1}",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFF9CA3AF)
+                                )
+                            }
+                        }
+
+                        // Line connector on right
+                        if (index < steps.size - 1) {
+                            Divider(
+                                color = if (index < currentStepIndex) BrandPrimary else Color(0xFFE5E7EB),
+                                thickness = 3.dp,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    val displayName = when (stepName) {
+                        "Accepted" -> "Accepted"
+                        "Processing" -> "Picked Up"
+                        "On the Way" -> "On the Way"
+                        "Delivered" -> "Delivered"
+                        else -> stepName
+                    }
+
+                    Text(
+                        text = displayName,
+                        fontSize = 9.sp,
+                        fontWeight = if (isCurrent) FontWeight.Black else FontWeight.Bold,
+                        color = if (isCurrent) BrandPrimary else BrandSecondaryText,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -590,18 +874,16 @@ fun RiderTopBar(
     navigationIcon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Default.Menu,
     actions: @Composable (RowScope.() -> Unit)? = null
 ) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(0.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .statusBarsPadding()
+            .border(width = 1.dp, color = BrandBorder, shape = RoundedCornerShape(0.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .background(Color.White)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -612,7 +894,7 @@ fun RiderTopBar(
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
-                        .background(BrandPrimary.copy(alpha = 0.08f))
+                        .background(BrandLightSlate)
                         .clickable { onMenuClick() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -623,22 +905,47 @@ fun RiderTopBar(
                         modifier = Modifier.size(20.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 if (title == "Ki-Lagbe Rider") {
-                    Text("Ki-Lagbe", fontWeight = FontWeight.Black, fontSize = 18.sp, color = BrandDark)
-                    Text(" Rider", fontWeight = FontWeight.Black, fontSize = 18.sp, color = BrandPrimary)
+                    Text("Ki-Lagbe", fontWeight = FontWeight.Black, fontSize = 20.sp, color = BrandDark)
+                    Text(" Rider", fontWeight = FontWeight.Black, fontSize = 20.sp, color = BrandPrimary)
                 } else {
-                    Text(title, fontWeight = FontWeight.Black, fontSize = 17.sp, color = BrandDark)
+                    Text(title, fontWeight = FontWeight.Black, fontSize = 18.sp, color = BrandDark)
                 }
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                if (showOnlineToggle) {
-                    OnlineOfflinePill(viewModel = viewModel)
+                // Symmetrical bell badge + wallet layout as requested by Screen 1
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(BrandLightSlate)
+                        .clickable { },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(contentAlignment = Alignment.TopEnd) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifications",
+                            tint = BrandDark,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .offset(x = 6.dp, y = (-4).dp)
+                                .size(13.dp)
+                                .clip(CircleShape)
+                                .background(BrandDanger),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("3", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
-                
+
                 actions?.invoke(this)
             }
         }
@@ -935,23 +1242,12 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                 ) {
                     // Good Morning Rased Green Card Banner
                     item {
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = BrandPrimary),
-                            shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(getDynamicGreeting(riderDetail?.name ?: "Partner"), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text("Stay safe. Deliver smile 😉", fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f))
-                                }
-                            }
-                        }
+                        RiderProfileBannerAndStats(
+                            viewModel = viewModel,
+                            activeOrdersCount = activeOrders.size,
+                            countDel = countDel,
+                            earnings = earnings
+                        )
                     }
 
                     // Main Order Card Details
@@ -1123,6 +1419,13 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentPadding = PaddingValues(bottom = 120.dp, top = 16.dp, start = 16.dp, end = 16.dp)
                 ) {
+                    item {
+                        OrderTimelineStepper(activeOrder.status)
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
+                    // Live corridor map removed
+
                     item {
                         Card(
                             colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -1504,23 +1807,13 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                 .padding(padding)
         ) {
             // Good Morning / Hi MD Rased Green Card Banner (ALWAYS SHOWN BENEATH HEADER)
-            Card(
-                colors = CardDefaults.cardColors(containerColor = BrandPrimary),
-                shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(getDynamicGreeting(riderDetail?.name ?: "Partner"), fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color.White)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text("Stay safe. Deliver smile 😉", fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f))
-                    }
-                }
-            }
+            RiderProfileBannerAndStats(
+                viewModel = viewModel,
+                activeOrdersCount = activeOrders.size,
+                countDel = countDel,
+                earnings = earnings
+            )
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (activeOrders.isEmpty()) {
                 val homeInfiniteTransition = rememberInfiniteTransition(label = "home_pulse")
@@ -2248,6 +2541,7 @@ fun ProfileTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
     val context = LocalContext.current
     val rider by viewModel.currentRider.collectAsState()
     val pinState by viewModel.pinChangeState.collectAsState()
+    val countDel by viewModel.walletDeliveredCount.collectAsState()
 
     var oldPin by remember { mutableStateOf("") }
     var newPin by remember { mutableStateOf("") }
@@ -2285,76 +2579,122 @@ fun ProfileTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
         ) {
             item {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(24.dp),
+                    // Upper green banner
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, BrandBorder, RoundedCornerShape(24.dp))
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.BottomEnd) {
-                                AsyncImage(
-                                    model = rider?.photo?.ifEmpty { "https://via.placeholder.com/120" },
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(100.dp)
-                                        .clip(CircleShape)
-                                        .border(3.dp, BrandPrimary, CircleShape)
+                            .height(140.dp)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(BrandPrimary, BrandAccent)
                                 )
-                                Box(
-                                    modifier = Modifier
-                                        .size(26.dp)
-                                        .clip(CircleShape)
-                                        .background(BrandPrimary)
-                                        .border(2.dp, Color.White, CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Verified,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(14.dp))
-                            Text(
-                                text = rider?.name ?: "Unknown Partner",
-                                fontWeight = FontWeight.Black,
-                                fontSize = 21.sp,
-                                color = BrandDark
                             )
-                            Text(
-                                text = rider?.phone ?: "",
-                                fontSize = 13.sp,
-                                color = BrandSecondaryText,
-                                fontWeight = FontWeight.Black,
-                                modifier = Modifier.padding(top = 2.dp)
+                    )
+                    
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 40.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Profile Avatar centered
+                        Box(contentAlignment = Alignment.BottomEnd) {
+                            AsyncImage(
+                                model = rider?.photo?.ifEmpty { "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150" } 
+                                    ?: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150",
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(90.dp)
+                                    .clip(CircleShape)
+                                    .border(3.dp, Color.White, CircleShape)
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(BrandPrimary.copy(alpha = 0.12f))
-                                    .padding(horizontal = 12.dp, vertical = 5.dp)
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(BrandPrimary)
+                                    .border(2.dp, Color.White, CircleShape),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = (rider?.area ?: "Unknown Area").uppercase(),
-                                    color = BrandPrimary,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 10.sp
+                                Icon(
+                                    imageVector = Icons.Default.Verified,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(12.dp)
                                 )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(10.dp))
+                        
+                        Text(
+                            text = rider?.name ?: "Md Rased Ahmed",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 20.sp,
+                            color = BrandDark
+                        )
+                        
+                        Spacer(modifier = Modifier.height(2.dp))
+                        
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = rider?.phone ?: "01700000000",
+                                fontSize = 12.sp,
+                                color = BrandSecondaryText,
+                                fontWeight = FontWeight.Bold
+                            )
+                            
+                            Box(
+                                modifier = Modifier
+                                    .size(4.dp)
+                                    .clip(CircleShape)
+                                    .background(BrandSecondaryText)
+                            )
+                            
+                            Text(
+                                text = (rider?.area ?: "Dhaka").uppercase(),
+                                color = BrandPrimary,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 10.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        // Overlapping Rating and Total Deliveries Card
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                                .border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
+                                .shadow(4.dp, RoundedCornerShape(16.dp), spotColor = BrandDark.copy(alpha = 0.05f))
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Star, null, tint = Color(0xFFFBBF24), modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("5.0", fontWeight = FontWeight.Black, fontSize = 18.sp, color = BrandDark)
+                                    }
+                                    Text("Star Rating", fontSize = 11.sp, color = BrandSecondaryText, fontWeight = FontWeight.Bold)
+                                }
+                                Divider(modifier = Modifier.height(30.dp).width(1.dp), color = BrandBorder)
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("$countDel", fontWeight = FontWeight.Black, fontSize = 18.sp, color = BrandDark)
+                                    Text("Total Deliveries", fontSize = 11.sp, color = BrandSecondaryText, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
