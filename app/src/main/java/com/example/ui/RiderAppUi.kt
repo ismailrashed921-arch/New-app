@@ -456,108 +456,127 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
         }
     }
 
-    Scaffold(containerColor = BrandBackground) { padding ->
+    Scaffold(containerColor = Color.White) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp)
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(32.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                modifier = Modifier.fillMaxWidth().border(1.dp, BrandBorder, RoundedCornerShape(32.dp))
-            ) {
-                Column(
-                    modifier = Modifier.padding(28.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    KiLagbeLogoMark(showSlogan = true)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Rider Partner",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 15.sp,
-                        color = BrandSecondaryText
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(52.dp))
+            KiLagbeLogoMark(showSlogan = true)
+            Spacer(modifier = Modifier.height(44.dp))
 
-                    OutlinedTextField(
-                        value = phone,
-                        onValueChange = { phone = it },
-                        label = { Text("Phone Number") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        leadingIcon = { Icon(Icons.Default.Phone, null, tint = BrandPrimary) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BrandPrimary,
-                            unfocusedBorderColor = BrandBorder,
-                            focusedLabelColor = BrandPrimary,
-                            unfocusedLabelColor = BrandSecondaryText
-                        ),
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp)
-                    )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text("Welcome Back!", fontSize = 21.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text("Login to continue your deliveries", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = BrandSecondaryText)
+                Spacer(modifier = Modifier.height(22.dp))
 
-                    OutlinedTextField(
-                        value = pin,
-                        onValueChange = { if (it.length <= 6) pin = it },
-                        label = { Text("Secret 6-Digit PIN") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        leadingIcon = { Icon(Icons.Default.Lock, null, tint = BrandPrimary) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BrandPrimary,
-                            unfocusedBorderColor = BrandBorder,
-                            focusedLabelColor = BrandPrimary,
-                            unfocusedLabelColor = BrandSecondaryText
-                        ),
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
-                    )
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    placeholder = { Text("Mobile Number") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    leadingIcon = { Icon(Icons.Default.Phone, null, tint = BrandPrimary) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BrandPrimary,
+                        unfocusedBorderColor = BrandBorder,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedLabelColor = BrandPrimary,
+                        cursorColor = BrandPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(58.dp)
+                )
 
-                    Button(
-                        onClick = {
-                            if (phone.isEmpty() || pin.isEmpty()) {
-                                Toast.makeText(context, "Please enter Phone and PIN!", Toast.LENGTH_SHORT).show()
-                            } else {
-                                viewModel.login(context, phone, pin)
-                            }
-                        },
-                        enabled = loginState !is LoginState.Loading,
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth().height(56.dp)
-                    ) {
-                        if (loginState is LoginState.Loading) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedTextField(
+                    value = pin,
+                    onValueChange = { if (it.length <= 6) pin = it },
+                    placeholder = { Text("Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    leadingIcon = { Icon(Icons.Default.Lock, null, tint = BrandPrimary) },
+                    trailingIcon = { Icon(Icons.Default.Visibility, null, tint = BrandSecondaryText, modifier = Modifier.size(18.dp)) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BrandPrimary,
+                        unfocusedBorderColor = BrandBorder,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedLabelColor = BrandPrimary,
+                        cursorColor = BrandPrimary
+                    ),
+                    modifier = Modifier.fillMaxWidth().height(58.dp)
+                )
+
+                Text(
+                    "Forgot Password?",
+                    color = BrandPrimary,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 12.sp,
+                    modifier = Modifier.align(Alignment.End).padding(top = 12.dp, bottom = 18.dp)
+                )
+
+                Button(
+                    onClick = {
+                        if (phone.isEmpty() || pin.isEmpty()) {
+                            Toast.makeText(context, "Please enter Phone and PIN!", Toast.LENGTH_SHORT).show()
                         } else {
-                            Text("Log In Now", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            viewModel.login(context, phone, pin)
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Row(
-                        modifier = Modifier.clickable { onNavigateToSignUp() }.padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Apply as New Partner", color = BrandPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(Icons.Default.ArrowForward, null, tint = BrandPrimary, modifier = Modifier.size(16.dp))
+                    },
+                    enabled = loginState !is LoginState.Loading,
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) {
+                    if (loginState is LoginState.Loading) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    } else {
+                        Text("Login", fontSize = 15.sp, fontWeight = FontWeight.Black, color = Color.White)
                     }
                 }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Divider(modifier = Modifier.weight(1f), color = BrandBorder)
+                    Text("or", color = BrandSecondaryText, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 14.dp))
+                    Divider(modifier = Modifier.weight(1f), color = BrandBorder)
+                }
+
+                OutlinedButton(
+                    onClick = onNavigateToSignUp,
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, Brush.horizontalGradient(listOf(BrandPrimary, BrandAccent))),
+                    modifier = Modifier.fillMaxWidth().height(54.dp)
+                ) {
+                    Text("Login with Phone Number", color = BrandPrimary, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                }
             }
+
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                "By continuing, you agree to our Terms & Conditions",
+                color = BrandSecondaryText,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(vertical = 24.dp)
+            )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(viewModel: RiderViewModel, onNavigateToLogin: () -> Unit) {
     val context = LocalContext.current
@@ -1101,7 +1120,7 @@ fun MainAppScreen(viewModel: RiderViewModel) {
 
                     val menuOptions = listOf(
                         Triple("Home", Icons.Default.GridView, ActiveTab.Home),
-                        Triple("My Performance", Icons.Default.AccountBalance, ActiveTab.Wallet),
+                        Triple("Earnings", Icons.Default.AccountBalanceWallet, ActiveTab.Wallet),
                         Triple("My Orders", Icons.Default.ListAlt, ActiveTab.Orders),
                         Triple("Profile", Icons.Default.Person, ActiveTab.Profile)
                     )
@@ -1195,8 +1214,8 @@ fun MainAppScreen(viewModel: RiderViewModel) {
                     NavigationBarItem(
                         selected = activeTab == ActiveTab.Wallet,
                         onClick = { viewModel.activeTab.value = ActiveTab.Wallet },
-                        icon = { Icon(if (activeTab == ActiveTab.Wallet) Icons.Filled.AccountBalance else Icons.Outlined.AccountBalance, null) },
-                        label = { Text("Performance", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
+                        icon = { Icon(if (activeTab == ActiveTab.Wallet) Icons.Filled.AccountBalanceWallet else Icons.Outlined.AccountBalanceWallet, null) },
+                        label = { Text("Earnings", fontWeight = FontWeight.Bold, fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Color.White,
                             selectedTextColor = BrandPrimary,
@@ -2342,7 +2361,7 @@ fun WalletTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
         containerColor = BrandBackground,
         topBar = {
             RiderTopBar(
-                title = "My Performance",
+                title = "Earnings",
                 viewModel = viewModel,
                 onMenuClick = onMenuClick,
                 actions = {
