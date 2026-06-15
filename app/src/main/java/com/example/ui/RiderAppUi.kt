@@ -58,11 +58,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 // Premium Delivery Startup Colors
-private val BrandPrimary = Color(0xFF00B074)       // Beautiful Emerald Green matching the screenshot 100%
+private val BrandPrimary = Color(0xFF0F7F79)       // Ki-Lagbe Teal Green
 private val BrandDark = Color(0xFF111827)          // Warm Slate Dark Text
 private val BrandLightSlate = Color(0xFFF3F4F6)     // Slate 100
 private val BrandBackground = Color(0xFFF4F6F8)     // App Background Canvas
-private val BrandAccent = Color(0xFF10B981)         // Accent Green
+private val BrandAccent = Color(0xFF14A39B)         // Premium teal accent
 private val BrandSecondaryText = Color(0xFF6B7280)  // Cool Grey Text
 private val BrandBorder = Color(0xFFE5E7EB)         // Cool Slate Border
 private val BrandWarning = Color(0xFFF59E0B)        // Amber Status Warning
@@ -79,6 +79,41 @@ private fun getDynamicGreeting(name: String): String {
         else -> "Good Night"
     }
     return "$greeting, $name 👋"
+}
+
+@Composable
+fun KiLagbeLogoMark(
+    modifier: Modifier = Modifier,
+    showSlogan: Boolean = false,
+    textColor: Color = BrandDark
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.app_logo),
+            contentDescription = "Ki-Lagbe logo",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(76.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Ki-Lagbe",
+            fontWeight = FontWeight.Black,
+            fontSize = 25.sp,
+            color = textColor
+        )
+        if (showSlogan) {
+            Text(
+                text = "Everything You Need",
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                color = BrandPrimary,
+                letterSpacing = 0.4.sp
+            )
+        }
+    }
 }
 
 @Composable
@@ -442,26 +477,13 @@ fun LoginScreen(viewModel: RiderViewModel, onNavigateToSignUp: () -> Unit) {
                     modifier = Modifier.padding(28.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(90.dp)
-                            .clip(CircleShape)
-                            .background(BrandPrimary.copy(alpha = 0.1f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.TwoWheeler,
-                            contentDescription = "App Icon",
-                            tint = BrandPrimary,
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    KiLagbeLogoMark(showSlogan = true)
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Ki-Lagbe Rider",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 28.sp,
-                        color = BrandDark
+                        text = "Rider Partner",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 15.sp,
+                        color = BrandSecondaryText
                     )
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -907,8 +929,20 @@ fun RiderTopBar(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 if (title == "Ki-Lagbe Rider") {
-                    Text("Ki-Lagbe", fontWeight = FontWeight.Black, fontSize = 20.sp, color = BrandDark)
-                    Text(" Rider", fontWeight = FontWeight.Black, fontSize = 20.sp, color = BrandPrimary)
+                    Image(
+                        painter = painterResource(id = R.drawable.app_logo),
+                        contentDescription = "Ki-Lagbe logo",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(34.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Row {
+                            Text("Ki-Lagbe", fontWeight = FontWeight.Black, fontSize = 18.sp, color = BrandDark)
+                            Text(" Rider", fontWeight = FontWeight.Black, fontSize = 18.sp, color = BrandPrimary)
+                        }
+                        Text("Everything You Need", fontWeight = FontWeight.Bold, fontSize = 9.sp, color = BrandSecondaryText)
+                    }
                 } else {
                     Text(title, fontWeight = FontWeight.Black, fontSize = 18.sp, color = BrandDark)
                 }
@@ -1018,7 +1052,7 @@ fun MainAppScreen(viewModel: RiderViewModel) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Brush.horizontalGradient(colors = listOf(BrandPrimary, Color(0xFF00C896))))
+                            .background(Brush.horizontalGradient(colors = listOf(BrandPrimary, Color(0xFF14A39B))))
                             .padding(24.dp)
                     ) {
                         Row(
@@ -1027,6 +1061,24 @@ fun MainAppScreen(viewModel: RiderViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.app_logo),
+                                        contentDescription = "Ki-Lagbe logo",
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Color.White)
+                                            .padding(4.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text("Ki-Lagbe", fontWeight = FontWeight.Black, fontSize = 18.sp, color = Color.White)
+                                        Text("Everything You Need", fontWeight = FontWeight.Bold, fontSize = 10.sp, color = Color.White.copy(alpha = 0.78f))
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
                                 Text(riderDetail?.name?.ifBlank { "Ki-Lagbe Rider" } ?: "Ki-Lagbe Rider", fontWeight = FontWeight.ExtraBold, fontSize = 19.sp, color = Color.White)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Row(
@@ -3042,7 +3094,7 @@ fun DeliveryScooterCanvas() {
 
         // Main Body Box
         drawRoundRect(
-            color = Color(0xFF00C896),
+            color = Color(0xFF14A39B),
             topLeft = androidx.compose.ui.geometry.Offset(w * 0.32f, centerY - w * 0.18f),
             size = androidx.compose.ui.geometry.Size(w * 0.28f, w * 0.12f),
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(15f, 15f)
@@ -3064,7 +3116,7 @@ fun DeliveryScooterCanvas() {
             lineTo(w * 0.68f, centerY - w * 0.08f)
             close()
         }
-        drawPath(shieldPath, color = Color(0xFF00C896))
+        drawPath(shieldPath, color = Color(0xFF14A39B))
 
         // Delivery Box
         drawRoundRect(
@@ -3113,8 +3165,8 @@ fun SimulationMapCanvas(modifier: Modifier = Modifier) {
             lineTo(w * 0.8f, h * 0.7f)
         }
 
-        drawPath(route, color = Color(0xFF00C896).copy(alpha = 0.15f), style = Stroke(12f, cap = StrokeCap.Round))
-        drawPath(route, color = Color(0xFF00C896), style = Stroke(5f, cap = StrokeCap.Round))
+        drawPath(route, color = Color(0xFF14A39B).copy(alpha = 0.15f), style = Stroke(12f, cap = StrokeCap.Round))
+        drawPath(route, color = Color(0xFF14A39B), style = Stroke(5f, cap = StrokeCap.Round))
 
         // Start point (Shop)
         drawCircle(Color.White, 12f, androidx.compose.ui.geometry.Offset(w * 0.2f, h * 0.3f))
@@ -3141,7 +3193,7 @@ fun SimulationMapCanvas(modifier: Modifier = Modifier) {
             finalY = h * 0.7f
         }
 
-        drawCircle(Color(0xFF00C896).copy(alpha = 0.35f), 18f, androidx.compose.ui.geometry.Offset(finalX, finalY))
+        drawCircle(Color(0xFF14A39B).copy(alpha = 0.35f), 18f, androidx.compose.ui.geometry.Offset(finalX, finalY))
         drawCircle(Color(0xFF0F172A), 8f, androidx.compose.ui.geometry.Offset(finalX, finalY))
     }
 }
@@ -3173,7 +3225,7 @@ fun OnlineHoursChartCanvas(modifier: Modifier = Modifier) {
         drawPath(
             fill,
             brush = Brush.verticalGradient(
-                colors = listOf(Color(0xFF00C896).copy(alpha = 0.3f), Color.Transparent),
+                colors = listOf(Color(0xFF14A39B).copy(alpha = 0.3f), Color.Transparent),
                 startY = h * 0.2f,
                 endY = h * 0.9f
             )
@@ -3185,11 +3237,11 @@ fun OnlineHoursChartCanvas(modifier: Modifier = Modifier) {
                 lineTo(pts[i].x, pts[i].y)
             }
         }
-        drawPath(stroke, color = Color(0xFF00C896), style = Stroke(6f, cap = StrokeCap.Round))
+        drawPath(stroke, color = Color(0xFF14A39B), style = Stroke(6f, cap = StrokeCap.Round))
 
         pts.forEach { pt ->
             drawCircle(Color.White, 8f, pt)
-            drawCircle(Color(0xFF00C896), 4f, pt)
+            drawCircle(Color(0xFF14A39B), 4f, pt)
         }
     }
 }
