@@ -1006,6 +1006,162 @@ fun RiderTopBar(
 }
 
 @Composable
+fun PremiumHomeDashboard(
+    viewModel: RiderViewModel,
+    onMenuClick: () -> Unit,
+    riderName: String,
+    isOnline: Boolean,
+    earnings: Double,
+    completedCount: Int,
+    pendingCount: Int,
+    recentOrders: List<Order>
+) {
+    val context = LocalContext.current
+    Scaffold(
+        containerColor = Color(0xFFF7F9FA),
+        topBar = {
+            RiderTopBar(title = "Ki-Lagbe Rider", viewModel = viewModel, onMenuClick = onMenuClick)
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 110.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Assalamu Alaikum,", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                        Text(riderName.ifBlank { "Ki-Lagbe Rider" }, fontSize = 22.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(if (isOnline) BrandPrimary.copy(alpha = 0.10f) else BrandDanger.copy(alpha = 0.08f))
+                            .clickable { viewModel.setOnlineStatus(!isOnline, context) }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(if (isOnline) BrandPrimary else BrandDanger))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (isOnline) "Online" else "Offline", fontWeight = FontWeight.Black, fontSize = 12.sp, color = if (isOnline) BrandPrimary else BrandDanger)
+                    }
+                }
+            }
+
+            item {
+                Card(
+                    shape = RoundedCornerShape(24.dp),
+                    modifier = Modifier.fillMaxWidth().shadow(10.dp, RoundedCornerShape(24.dp), spotColor = BrandPrimary.copy(alpha = 0.18f))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Brush.horizontalGradient(listOf(BrandPrimary, Color(0xFF078F85))))
+                            .padding(20.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("Today's Earnings", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.86f))
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("৳ ${earnings.toInt()}", fontSize = 34.sp, fontWeight = FontWeight.Black, color = Color.White)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("View details  ›", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Color.White.copy(alpha = 0.88f))
+                            }
+                            Box(
+                                modifier = Modifier.size(68.dp).clip(RoundedCornerShape(20.dp)).background(Color.White.copy(alpha = 0.14f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.AccountBalanceWallet, null, tint = Color.White, modifier = Modifier.size(38.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StatsMiniCard(
+                        title = "Completed",
+                        value = "$completedCount\nDeliveries",
+                        icon = Icons.Default.CheckCircle,
+                        iconColor = BrandPrimary,
+                        modifier = Modifier.weight(1f).height(110.dp)
+                    )
+                    StatsMiniCard(
+                        title = "Pending",
+                        value = "$pendingCount\nDeliveries",
+                        icon = Icons.Default.Inventory2,
+                        iconColor = Color(0xFF2F80ED),
+                        modifier = Modifier.weight(1f).height(110.dp)
+                    )
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Recent Orders", fontSize = 16.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                    Text("View All", fontSize = 12.sp, fontWeight = FontWeight.Black, color = BrandPrimary)
+                }
+            }
+
+            if (recentOrders.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 54.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier.size(112.dp).clip(CircleShape).background(BrandPrimary.copy(alpha = 0.10f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.TwoWheeler, null, tint = BrandPrimary, modifier = Modifier.size(44.dp))
+                        }
+                        Spacer(modifier = Modifier.height(18.dp))
+                        Text("Waiting for new orders", fontSize = 19.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                        Text("Incoming delivery requests will appear here automatically.", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
+                    }
+                }
+            } else {
+                items(recentOrders) { order ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color.White)
+                            .border(1.dp, BrandBorder, RoundedCornerShape(16.dp))
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("KL${getOrderIdDisplay(order)}", fontSize = 13.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                            Text(order.status, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = if (order.status == "Delivered") BrandPrimary else BrandWarning)
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("৳${order.total.toInt()}", fontSize = 14.sp, fontWeight = FontWeight.Black, color = BrandDark)
+                            Text(SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(order.time)), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandSecondaryText)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun WelcomeScreen(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
     val context = LocalContext.current
     Scaffold(
@@ -1288,13 +1444,7 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
         allOrders.sortedByDescending { if (it.deliveredAt > 0) it.deliveredAt else it.time }.take(3)
     }
 
-    // 1. OFFLINE WELCOME VIEW INTEGRATION
-    if (!isOnline && activeOrders.isEmpty()) {
-        WelcomeScreen(viewModel, onMenuClick)
-        return
-    }
-
-    // 2. ACTIVE ORDER SCREEN LOGIC
+    // 1. ACTIVE ORDER SCREEN LOGIC
     if (activeOrders.isNotEmpty() && showTrackingScreen) {
         val activeOrder = activeOrders.find { it.id == currentActiveOrderId } ?: activeOrders.first()
         var actionProgressing by remember { mutableStateOf(false) }
@@ -1862,6 +2012,20 @@ fun HomeTab(viewModel: RiderViewModel, onMenuClick: () -> Unit) {
                 }
             }
         }
+        return
+    }
+
+    if (activeOrders.isEmpty()) {
+        PremiumHomeDashboard(
+            viewModel = viewModel,
+            onMenuClick = onMenuClick,
+            riderName = riderDetail?.name ?: "",
+            isOnline = isOnline,
+            earnings = earnings,
+            completedCount = countDel,
+            pendingCount = allOrders.count { it.status in listOf("Assigned", "Accepted", "Pending", "Processing", "On the Way") },
+            recentOrders = recentActivities
+        )
         return
     }
 
